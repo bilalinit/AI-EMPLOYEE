@@ -1,0 +1,83 @@
+{
+  "mcpServers": {
+    "ai-gmail": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/gmail_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+      }
+    },
+    "linkedin-mcp": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/linkedin_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "LINKEDIN_MCP_SESSION": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts/sessions/linkedin_mcp"
+      }
+    },
+    "linkedin-api": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/linkedin_api_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+      }
+    },
+    "odoo": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/odoo_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+      }
+    },
+    "twitter-api": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/twitter_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+      }
+    },
+    "meta": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts",
+        "run",
+        "mcp_servers/meta_mcp.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+      }
+    }
+  }
+}

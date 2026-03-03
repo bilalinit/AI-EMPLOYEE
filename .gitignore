@@ -1,0 +1,120 @@
+# ====================================
+# SECRETS & CREDENTIALS (CRITICAL)
+# ====================================
+# Environment files with API keys and secrets
+.env
+ai_employee_scripts/.env
+*.env
+!.env.example
+
+# OAuth credentials and tokens (Google, Gmail, etc)
+credentials.json
+token*.json
+*token*.json
+ai_employee_scripts/credentials.json
+ai_employee_scripts/token_gmail.json
+
+# ====================================
+# PYTHON
+# ====================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+wheels/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+*.venv
+
+# ====================================
+# PROJECT-SPECIFIC
+# ====================================
+# Drop folder - temporary staging for external files
+
+
+# Chat logs
+chat.txt
+*.log
+
+# Obsidian app settings (local preferences, not content)
+.obsidian/
+
+
+# ====================================
+# SESSIONS & TEMP DATA
+# ====================================
+# Session data from orchestrator
+sessions/
+*.session
+*.session.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ====================================
+# IDE & EDITOR
+# ====================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# MISC
+# ====================================
+# Lock files (optional - uncomment if you use uv and want to ignore)
+# uv.lock
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Node modules (if any node tools are added)
+node_modules/
+
+# Playwright
+playwright/.cache/
+playwright-report/
+test-results/
