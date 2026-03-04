@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 
 from agents import Agent, GuardrailFunctionOutput, input_guardrail
-from cloud.agents.models import GuardrailCheck, RiskLevel
+from cloud.bots.models import GuardrailCheck, RiskLevel
 
 
 # ============================================================================

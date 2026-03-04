@@ -9,7 +9,7 @@ import re
 from typing import List
 
 from agents import Agent, GuardrailFunctionOutput, output_guardrail
-from cloud.agents.models import OutputCheck, RiskLevel
+from cloud.bots.models import OutputCheck, RiskLevel
 
 
 # ============================================================================

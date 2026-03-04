@@ -5,9 +5,14 @@ The 24/7 cloud-based orchestrator using OpenAI Agents SDK.
 Monitors Needs_Action, routes to Triage Agent, writes drafts to Updates.
 """
 
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import asyncio
 import logging
-from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
@@ -22,13 +27,13 @@ from cloud.config import (
     NEEDS_ACTION_CHECK_INTERVAL,
     VAULT_PATH
 )
-from cloud.agents.triage_agent import create_triage_agent, simple_triage
-from cloud.agents.email_agent import create_email_agent
-from cloud.agents.social_agent import create_social_agent
-from cloud.agents.finance_agent import create_finance_agent
+from cloud.bots.triage_agent import create_triage_agent, simple_triage
+from cloud.bots.email_agent import create_email_agent
+from cloud.bots.social_agent import create_social_agent
+from cloud.bots.finance_agent import create_finance_agent
 from cloud.guardrails.input_guardrails import check_input_safety_simple
 from cloud.guardrails.output_guardrails import check_output_safety_simple
-from cloud.agents.models import Category, Priority
+from cloud.bots.models import Category, Priority
 from cloud.tools.file_tools import (
     read_task,
     move_to_in_progress,
@@ -189,14 +194,9 @@ class CloudOrchestrator:
             in_progress_path = await move_to_in_progress(task_filename, agent="cloud")
             self.logger.info(f"Task claimed: {in_progress_path}")
 
-            # 4. Run triage
-            triage_result = await Runner.run(
-                self.triage_agent,
-                input=f"Process this task:\n\n{task_content}",
-                run_config=self.config
-            )
-
-            decision = triage_result.final_output
+            # 4. Run triage (use simple rule-based for GLM compatibility)
+            from cloud.bots.triage_agent import simple_triage
+            decision = simple_triage(task_content)
             self.logger.info(f"Triage: {decision.category} -> {decision.recommended_agent}")
 
             # 5. Handle based on triage decision
@@ -228,8 +228,10 @@ class CloudOrchestrator:
                 run_config=self.config
             )
 
-            # 8. Output guardrail check
+            # 8. Get output content (GLM returns text, not structured JSON)
             output_content = str(specialist_result.final_output)
+
+            # 9. Output guardrail check
             output_check = check_output_safety_simple(output_content)
 
             if not output_check.is_appropriate:
@@ -241,7 +243,7 @@ class CloudOrchestrator:
                 )
                 return False
 
-            # 9. Write draft to Updates/
+            # 10. Write draft to Updates/
             draft_type = decision.category.value
             draft_path = await write_draft(
                 content=output_content,

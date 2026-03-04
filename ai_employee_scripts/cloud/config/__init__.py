@@ -16,7 +16,7 @@ load_dotenv()
 AGENT_TYPE = os.environ.get("AGENT_TYPE", "cloud")
 
 # Paths
-VAULT_PATH = Path(os.environ.get("VAULT_PATH", "./vault"))
+VAULT_PATH = Path(os.environ.get("VAULT_PATH", Path(__file__).parent.parent.parent.parent / "AI_Employee_Vault"))
 GIT_REMOTE = os.environ.get("GIT_REMOTE", "origin")
 
 # =============================================================================

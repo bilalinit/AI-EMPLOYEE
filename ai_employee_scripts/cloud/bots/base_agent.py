@@ -6,7 +6,7 @@ Part A: Core Basics - Agent Creation
 """
 
 from agents import Agent
-from cloud.agents.models import TriageDecision
+from cloud.bots.models import TriageDecision
 from cloud.tools.file_tools import (
     get_task_content,
     get_original_file,

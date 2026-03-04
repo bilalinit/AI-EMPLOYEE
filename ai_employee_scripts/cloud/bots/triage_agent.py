@@ -6,8 +6,8 @@ Part B: Advanced Workflows - Multi-Agent Handoffs
 """
 
 from agents import Agent
-from cloud.agents.models import TriageDecision, Category, Priority
-from cloud.agents.base_agent import create_base_agent, get_common_tools
+from cloud.bots.models import TriageDecision, Category, Priority
+from cloud.bots.base_agent import create_base_agent, get_common_tools
 
 
 # ============================================================================
@@ -60,18 +60,20 @@ def create_triage_agent(model=None) -> Agent:
 
     This implements Part B: Multi-Agent Handoffs from the OpenAI Agents SDK.
 
+    Note: GLM API doesn't support structured output well, so we parse manually.
+
     Args:
         model: The model to use (default: None, will be set by orchestrator)
 
     Returns:
-        Agent: Configured triage agent with structured output
+        Agent: Configured triage agent (no structured output for GLM compatibility)
     """
     return create_base_agent(
         name="TriageAgent",
         instructions=TRIAGE_INSTRUCTIONS,
         tools=get_common_tools(),
         model=model,
-        output_type=TriageDecision
+        output_type=None  # No structured output for GLM
     )
 
 
