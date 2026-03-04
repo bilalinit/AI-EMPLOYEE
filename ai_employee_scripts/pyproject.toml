@@ -14,4 +14,9 @@ dependencies = [
     "httpx>=0.27.0",
     "odoorpc>=0.10.1",
     "tweepy>=4.14.0",
+    # Platinum tier - OpenAI Agents SDK
+    "openai-agents>=0.1.0",
+    "python-dotenv>=1.0.0",
+    "aiofiles>=24.1.0",
+    "pydantic>=2.0",
 ]
