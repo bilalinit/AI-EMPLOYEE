@@ -87,7 +87,10 @@ There are two kinds of guardrails: Input guardrails run on the initial user inpu
 
 ```python
 from pydantic import BaseModel
-from agents import Agent, Runner, input_guardrail, GuardrailFunctionOutput, ModelSettings
+from agents import (
+    Agent, Runner, input_guardrail, GuardrailFunctionOutput,
+    InputGuardrailTripwireTriggered
+)
 
 class GuardrailCheck(BaseModel):
     """Guardrail to check user input"""
@@ -104,7 +107,7 @@ guardrail_agent = Agent(
 
 @input_guardrail
 async def guardrail_check(context, agent, input_text: str) -> GuardrailFunctionOutput:
-    result = await Runner.run(guardrail_agent, input=input_text, run_config=config)
+    result = await Runner.run(guardrail_agent, input_text, run_config=config)
     return GuardrailFunctionOutput(
         output_info=result.final_output,
         tripwire_triggered=result.final_output.should_block
@@ -121,7 +124,7 @@ async def main():
     try:
         response = await Runner.run(main_agent, "User input here", run_config=config)
         print(response.final_output)
-    except Exception as e:
+    except InputGuardrailTripwireTriggered as e:
         print(f"Input guardrail blocked request: {e}")
 ```
 
@@ -130,7 +133,10 @@ Validate agent responses before they reach the user.
 
 ```python
 from pydantic import BaseModel
-from agents import Agent, Runner, output_guardrail, GuardrailFunctionOutput, ModelSettings
+from agents import (
+    Agent, Runner, output_guardrail, GuardrailFunctionOutput,
+    OutputGuardrailTripwireTriggered
+)
 
 class OutputCheck(BaseModel):
     """Guardrail to validate agent output"""
@@ -143,17 +149,15 @@ output_guardrail_agent = Agent(
     instructions="Check if agent response is appropriate",
     model=model,
     output_type=OutputCheck,
-    model_settings=ModelSettings(tool_choice="required")
 )
 
 @output_guardrail
 async def output_check(context, agent, output_text: str) -> GuardrailFunctionOutput:
-    result = await Runner.run(output_guardrail_agent, input=output_text, run_config=config)
+    result = await Runner.run(output_guardrail_agent, output_text, run_config=config)
     return GuardrailFunctionOutput(
         output_info=result.final_output,
         tripwire_triggered=not result.final_output.is_appropriate
     )
-
 # Use with main agent
 main_agent = Agent(
     name="MainAgent",
@@ -165,8 +169,8 @@ async def main():
     try:
         response = await Runner.run(main_agent, "User input here", run_config=config)
         print(response.final_output)
-    except Exception as e:
-        print(f"Guardrail blocked response: {e}")
+    except OutputGuardrailTripwireTriggered as e:
+        print(f"Output guardrail blocked response: {e}")
 ```
 
 ### 4. Structured Outputs
@@ -255,10 +259,15 @@ print(response.final_output)
 Always handle these exceptions in production.
 
 ```python
-from agents import OutputGuardrailTripwireTriggered
+from agents import (
+    InputGuardrailTripwireTriggered,
+    OutputGuardrailTripwireTriggered
+)
 
 try:
     await Runner.run(agent, user_input)
+except InputGuardrailTripwireTriggered:
+    print("Input blocked by guardrails.")
 except OutputGuardrailTripwireTriggered:
     print("Response blocked by safety guardrails.")
 except Exception as e:

@@ -1,19 +1,29 @@
 {
   "LinkedInWatcher": {
-    "status": "healthy",
-    "timestamp": "2026-02-27T02:18:31.565154",
+    "status": "stopped",
+    "timestamp": "2026-03-15T12:06:26.594717",
     "details": {}
   },
   "GmailWatcher": {
     "status": "healthy",
-    "timestamp": "2026-02-27T02:18:04.591416",
+    "timestamp": "2026-03-15T12:04:27.035708",
     "details": {}
   },
   "FileSystemWatcher": {
     "status": "healthy",
-    "timestamp": "2026-02-27T02:17:58.389945",
+    "timestamp": "2026-03-15T11:20:44.401523",
     "details": {
       "check_interval": 60
     }
+  },
+  "GmailCloudWatcher": {
+    "status": "healthy",
+    "timestamp": "2026-03-09T06:44:02.786712",
+    "details": {}
+  },
+  "LinkedInCloudWatcher": {
+    "status": "healthy",
+    "timestamp": "2026-03-09T06:42:36.579094",
+    "details": {}
   }
 }

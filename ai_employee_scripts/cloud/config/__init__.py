@@ -6,11 +6,10 @@ Configuration for the OpenAI Agents SDK with GLM (Zhipu AI) model.
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from agents import OpenAIChatCompletionsModel, RunConfig, AsyncOpenAI
 
-# Load environment variables
-load_dotenv()
+# Note: .env is loaded by cloud_orchestrator.py before this module is imported
+# This ensures GLM_API_KEY and OPENAI_API_KEY are available
 
 # Agent type identification
 AGENT_TYPE = os.environ.get("AGENT_TYPE", "cloud")
@@ -26,7 +25,7 @@ GLM_API_KEY = os.environ.get("GLM_API_KEY", "")
 GLM_BASE_URL = os.environ.get("GLM_BASE_URL", "https://api.z.ai/api/paas/v4/")
 
 # Model Configuration
-MODEL_NAME = os.environ.get("MODEL_NAME", "glm-4.7-flash")
+MODEL_NAME = os.environ.get("MODEL_NAME", "glm-4.7")
 
 # Polling intervals (seconds)
 NEEDS_ACTION_CHECK_INTERVAL = int(os.environ.get("NEEDS_ACTION_CHECK_INTERVAL", "30"))
@@ -58,6 +57,8 @@ def get_model(client: AsyncOpenAI) -> OpenAIChatCompletionsModel:
 
 def get_run_config(model: OpenAIChatCompletionsModel, client: AsyncOpenAI) -> RunConfig:
     """Create and return a RunConfig for agent execution."""
+    # SDK tracing is enabled automatically when OPENAI_API_KEY is in environment
+    # No explicit tracing_client needed - SDK handles it internally
     return RunConfig(
         model=model,
         model_provider=client,

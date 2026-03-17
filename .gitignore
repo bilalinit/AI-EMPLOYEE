@@ -23,6 +23,9 @@ __pycache__/
 *$py.class
 *.so
 
+ai-employee-key-aws.pem
+aws_plan.md
+
 # Distribution / packaging
 build/
 dist/

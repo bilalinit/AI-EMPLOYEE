@@ -71,28 +71,30 @@ async def read_inbox_file(filename: str) -> str:
 async def write_draft(
     content: str,
     original_task: str,
-    draft_type: str = "draft"
+    draft_type: str = "draft",
+    original_content: str = None
 ) -> str:
     """
-    Write a draft to the Updates folder for local processing.
+    Write a draft to Pending_Approval for human review.
 
     Args:
         content: The draft content to write
         original_task: Original task filename for reference
         draft_type: Type of draft (email, social, finance, etc.)
+        original_content: Optional original task/email content to include
 
     Returns:
-        str: Path to the created draft file
+        str: Path to the created draft file in Pending_Approval
     """
     folders = get_vault_folders()
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Create filename
     filename = f"{draft_type.upper()}_DRAFT_{timestamp}.md"
-    draft_path = folders["updates"] / filename
+    draft_path = folders["pending_approval"] / filename
 
-    # Ensure Updates folder exists
-    folders["updates"].mkdir(parents=True, exist_ok=True)
+    # Ensure Pending_Approval folder exists
+    folders["pending_approval"].mkdir(parents=True, exist_ok=True)
 
     # Create frontmatter and content
     frontmatter = f"""---
@@ -106,8 +108,29 @@ status: pending_review
 
 """
 
+    # Add original content section if provided
+    original_section = ""
+    if original_content:
+        original_section = f"""## 📨 Original Message
+
+{original_content}
+
+---
+
+"""
+
+    # Combine all sections
+    full_content = frontmatter + original_section + f"""## ✨ Drafted Response
+
+{content}
+
+---
+*Drafted by AI Employee Cloud Agent*
+*Awaiting human approval before sending*
+"""
+
     async with aiofiles.open(draft_path, mode="w") as f:
-        await f.write(frontmatter + content)
+        await f.write(full_content)
 
     return str(draft_path)
 
@@ -286,7 +309,7 @@ async def save_draft(
     original_task: str,
     draft_type: str
 ) -> str:
-    """Save a generated draft to Updates folder for human review.
+    """Save a generated draft to Pending_Approval for human review.
 
     Args:
         content: The draft content to save
@@ -294,7 +317,7 @@ async def save_draft(
         draft_type: Type of draft (email, social, finance, etc.)
 
     Returns:
-        Path to the created draft file
+        Path to the created draft file in Pending_Approval
     """
     return await write_draft(content, original_task, draft_type)
 

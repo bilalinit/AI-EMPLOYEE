@@ -27,6 +27,7 @@ from googleapiclient.errors import HttpError
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from base_watcher import BaseWatcher
 from error_recovery import with_retry, CircuitBreaker, is_transient_error
+from shared.dedup_client import DedupClient
 
 
 # Gmail API Scopes
@@ -41,7 +42,8 @@ class GmailWatcher(BaseWatcher):
     First run will open browser for OAuth flow and save token.json
     """
 
-    def __init__(self, vault_path: str, credentials_path: str = None, check_interval: int = 120):
+    def __init__(self, vault_path: str, credentials_path: str = None, check_interval: int = 120,
+                 dedup_api_url: str = None):
         """
         Initialize Gmail Watcher.
 
@@ -49,6 +51,7 @@ class GmailWatcher(BaseWatcher):
             vault_path: Path to AI_Employee_Vault
             credentials_path: Path to credentials.json (OAuth client secrets)
             check_interval: Seconds between checks (default: 120)
+            dedup_api_url: URL of dedup API server for cloud coordination (optional)
         """
         super().__init__(vault_path, check_interval)
         self.credentials_path = Path(credentials_path) if credentials_path else None
@@ -58,6 +61,16 @@ class GmailWatcher(BaseWatcher):
 
         # Add Inbox path for storing full emails
         self.inbox = self.vault_path / "Inbox"
+
+        # Initialize dedup client for cloud coordination
+        json_path = self.vault_path / "Logs" / "gmail_processed_ids.json"
+        self.dedup_client = DedupClient(
+            api_url=dedup_api_url,
+            json_path=json_path,
+            source="local"
+        )
+        if dedup_api_url:
+            self.logger.info(f"Dedup API enabled: {dedup_api_url}")
 
     def _authenticate(self):
         """Authenticate with Gmail API using OAuth."""
@@ -155,11 +168,53 @@ class GmailWatcher(BaseWatcher):
             self.processed_ids = set(state_file.read_text().strip().split('\n'))
 
     def _save_processed_ids(self):
-        """Save processed message IDs to state file."""
+        """Save processed message IDs to state file and sync with API."""
+        # Save to local txt file (legacy, kept for compatibility)
         state_file = self.vault_path / "Logs"
         state_file.mkdir(parents=True, exist_ok=True)
-        state_file = state_file / "gmail_processed_ids.txt"
-        state_file.write_text('\n'.join(self.processed_ids))
+        txt_file = state_file / "gmail_processed_ids.txt"
+        txt_file.write_text('\n'.join(self.processed_ids))
+
+    def _is_already_processed(self, message_id: str) -> bool:
+        """
+        Check if message was already processed using two-layer deduplication.
+
+        Layer 1: Check local processed_ids set (in-memory, from txt file)
+        Layer 2: Check via dedup client (JSON + API for cloud coordination)
+
+        Args:
+            message_id: Gmail message ID to check
+
+        Returns:
+            True if already processed, False if new
+        """
+        # Layer 1: Check local in-memory set
+        if message_id in self.processed_ids:
+            return True
+
+        # Layer 2: Check via dedup client (JSON + API)
+        if self.dedup_client.is_processed(message_id):
+            self.logger.info(f"Message {message_id} found via dedup client (cloud processed)")
+            return True
+
+        return False
+
+    def _register_processed(self, message_id: str):
+        """
+        Register a message as processed using two-layer storage.
+
+        Layer 1: Add to local processed_ids set and save to txt file
+        Layer 2: Register via dedup client (JSON + API for cloud coordination)
+
+        Args:
+            message_id: Gmail message ID to register
+        """
+        # Layer 1: Add to local set and save
+        self.processed_ids.add(message_id)
+        self._save_processed_ids()
+
+        # Layer 2: Register via dedup client (JSON + API)
+        self.dedup_client.register(message_id)
 
     @with_retry(max_attempts=3, base_delay=2, backoff_factor=2)
     def check_for_updates(self) -> list:
@@ -179,10 +234,10 @@ class GmailWatcher(BaseWatcher):
 
         messages = results.get('messages', [])
 
-        # Filter out already processed messages
+        # Filter out already processed messages using two-layer deduplication
         new_messages = [
             m for m in messages
-            if m['id'] not in self.processed_ids
+            if not self._is_already_processed(m['id'])
         ]
 
         return new_messages
@@ -341,9 +396,8 @@ original_file: {inbox_filename}
 
             task_file.write_text(content)
 
-            # Mark as processed
-            self.processed_ids.add(message['id'])
-            self._save_processed_ids()
+            # Mark as processed (two-layer: local + cloud coordination)
+            self._register_processed(message['id'])
 
             self.logger.info(f"Saved email to Inbox: {inbox_filename}")
             self.logger.info(f"Created email task: {task_file.name}")
@@ -432,9 +486,10 @@ original_file: {inbox_filename}
 def main():
     """Entry point for running the watcher directly."""
     import sys
+    import os
 
-    # Default vault path
-    vault_path = Path(__file__).parent.parent / "AI_Employee_Vault"
+    # Default vault path (go up from watchers/ to project root, then into AI_Employee_Vault)
+    vault_path = Path(__file__).parent.parent.parent / "AI_Employee_Vault"
 
     if len(sys.argv) > 1:
         vault_path = Path(sys.argv[1])
@@ -444,8 +499,14 @@ def main():
         print("Usage: python gmail_watcher.py [vault_path]")
         sys.exit(1)
 
+    # Read dedup API URL from environment variable (optional)
+    dedup_api_url = os.getenv("DEDUP_API_URL")
+
     try:
-        watcher = GmailWatcher(str(vault_path))
+        watcher = GmailWatcher(
+            vault_path=str(vault_path),
+            dedup_api_url=dedup_api_url
+        )
         watcher.run()
     except FileNotFoundError as e:
         print(f"\n❌ Error: {e}")

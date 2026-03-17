@@ -195,12 +195,14 @@ class AIEmployeeOrchestrator:
 
             try:
                 # Use uv to run the watcher (matches project setup)
+                # Pass environment variables (DEDUP_API_URL, etc.) to child process
                 proc = subprocess.Popen(
                     ['uv', 'run', 'python', str(watcher_path), str(self.vault_path)],
                     cwd=str(self.scripts_path),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    start_new_session=True  # Detach from parent
+                    start_new_session=True,  # Detach from parent
+                    env=os.environ.copy()  # Pass DEDUP_API_URL and other env vars
                 )
 
                 # Store process with its config for restart

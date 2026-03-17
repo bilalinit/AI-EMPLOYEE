@@ -20,6 +20,8 @@ from cloud.tools.git_tools import (
     pull_from_git,
     check_git_status
 )
+from cloud.guardrails.input_guardrails import input_safety_check
+from cloud.guardrails.output_guardrails import output_safety_check
 
 
 # ============================================================================
@@ -62,7 +64,8 @@ def create_base_agent(
     instructions: str,
     tools: list = None,
     model=None,
-    output_type=None
+    output_type=None,
+    with_guardrails: bool = True
 ) -> Agent:
     """
     Create a base agent with shared configuration.
@@ -73,19 +76,28 @@ def create_base_agent(
         tools: List of function tools
         model: Model to use
         output_type: Structured output type (optional)
+        with_guardrails: Whether to attach input/output guardrails (default: True)
 
     Returns:
         Agent: Configured agent
     """
     full_instructions = f"{SHARED_CONTEXT}\n\nYOUR SPECIFIC ROLE:\n{instructions}"
 
-    return Agent(
-        name=name,
-        instructions=full_instructions,
-        tools=tools or [],
-        model=model,
-        output_type=output_type
-    )
+    # Build agent configuration
+    agent_config = {
+        "name": name,
+        "instructions": full_instructions,
+        "tools": tools or [],
+        "model": model,
+        "output_type": output_type
+    }
+
+    # Attach guardrails if requested (SDK Pattern)
+    if with_guardrails:
+        agent_config["input_guardrails"] = [input_safety_check]
+        agent_config["output_guardrails"] = [output_safety_check]
+
+    return Agent(**agent_config)
 
 
 # ============================================================================
@@ -102,6 +114,20 @@ def get_common_tools() -> list:
     return [
         get_task_content,
         get_original_file,
+        read_context_file,
+    ]
+
+
+def get_common_tools_with_save() -> list:
+    """
+    Get tools including save_draft and complete_task for agents that need them.
+
+    Returns:
+        list: Common function tools plus save/complete tools
+    """
+    return [
+        get_task_content,
+        get_original_file,
         save_draft,
         claim_task,
         complete_task,
@@ -110,3 +136,4 @@ def get_common_tools() -> list:
         pull_from_git,
         check_git_status,
     ]
+

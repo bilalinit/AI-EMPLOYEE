@@ -1,9 +1,10 @@
 # Personal AI Employee - Project Progress Summary
 
 **Hackathon:** Personal AI Employee Hackathon 0 - Building Autonomous FTEs in 2026
-**Current Tier:** Gold ✅ COMPLETE (12/12 requirements - 100%)
-**Date:** February 26, 2026
+**Current Tier:** Platinum 🔄 IN PROGRESS (~85% complete)
+**Date:** March 13, 2026
 **Project Path:** `/mnt/d/coding Q4/hackathon-0/save-1/`
+**Current Branch:** `platinum-tier`
 
 ---
 
@@ -14,7 +15,7 @@
 | **Bronze** | ✅ Complete | February 15, 2026 |
 | **Silver** | ✅ Complete | February 21, 2026 |
 | **Gold** | ✅ Complete | February 26, 2026 |
-| **Platinum** | ❌ Not Started | - |
+| **Platinum** | 🔄 In Progress | ~85% Complete (March 2026) |
 
 ---
 
@@ -128,6 +129,149 @@
 | 10 | Ralph Wiggum loop | ✅ **COMPLETE** | Stop hook implemented in .claude/hooks/ralph_wiggum.py + emergency exit via stop_ralph file |
 | 11 | Documentation of architecture | ✅ | This file + comprehensive skills |
 | 12 | All AI as Agent Skills | ✅ | 12 skills implemented |
+
+---
+
+## Today's Accomplishments (March 13, 2026)
+
+### Vault Git Sync - COMPLETE ✅
+
+**1. Created vault_sync.py:**
+- ✅ Runs on BOTH Local (WSL) and Cloud (Oracle VM)
+- ✅ Pattern: Pull → Check Changes → Commit → Push
+- ✅ Detects LOCAL vs CLOUD environment automatically
+- ✅ Uses `platinum-tier` branch
+- ✅ Logs to `AI_Employee_Vault/Logs/vault_sync.log`
+- ✅ Cron-ready (runs once) or daemon mode (continuous)
+
+**2. Features:**
+- `--status` - Check git status
+- `--dry-run` - Test without making changes
+- `--daemon` - Run continuously
+- `--rebase` - Use pull --rebase for cleaner history
+
+**3. Cron Setup:**
+```bash
+# Local (WSL)
+*/5 * * * * cd "/mnt/d/coding Q4/hackathon-0/save-1" && uv run python ai_employee_scripts/vault_sync.py
+
+# Cloud (Oracle VM)
+*/5 * * * * cd /home/ubuntu/ai-employee && uv run python vault_sync.py
+```
+
+**File Created:**
+- `ai_employee_scripts/vault_sync.py` - Git-based vault synchronization
+
+---
+
+## Today's Accomplishments (March 9, 2026)
+
+### Platinum Tier: Cloud Agent + MCP Integration - MAJOR MILESTONE 🎉
+
+**1. Cloud Agent Architecture Complete:**
+- ✅ Cloud Orchestrator with task monitoring and processing
+- ✅ Triage Agent with SDK automatic handoffs to specialists
+- ✅ Email, Social, and Finance agents with proper instructions
+- ✅ Input/Output guardrails with tripwire functionality
+- ✅ Per-request MCP lifecycle (connect → use → cleanup)
+
+**2. Odoo MCP Integration - ALL TOOLS WORKING:**
+- ✅ `search_partners()` - Search customers/vendors
+- ✅ `get_customer()` - Get customer details (Acme Corp ID: 14)
+- ✅ `get_invoice_history()` - Get past invoices (fixed: `residual` → `amount_residual`)
+- ✅ `get_pricing()` - Verify service rates (video editing: $80/hr)
+- ✅ `create_draft_invoice()` - Create draft in Odoo (Invoice #12: $1,200)
+
+**3. Cloud Watcher Fixes & Integration - COMPLETE ✅:**
+- ✅ Fixed import errors (relative → absolute imports for `cloud_watchers` package)
+- ✅ Fixed orchestrator to use correct watcher class names (`CloudGmailWatcher`, `CloudLinkedInWatcher`)
+- ✅ Fixed orchestrator to call `run()` instead of `start()` method
+- ✅ Fixed orchestrator to detect both `TASK_*.md` and `EMAIL_*.md` patterns
+- ✅ Fixed `base_cloud_watcher.py` parameter mismatches with `CircuitBreaker`, `DeadLetterQueue`, `HealthMonitor`
+- ✅ Added `retry_call()` helper function for operation-level retry
+- ✅ **Unified state file format** - Cloud watcher now uses `Logs/gmail_processed_ids.txt` (same as local)
+
+**4. PM2 Process Manager - 24/7 Operation Setup ✅:**
+- ✅ Split configs: `ecosystem.local.config.js` and `ecosystem.cloud.config.js`
+- ✅ Updated scripts: `start_pm2.sh [local|cloud]` and `stop_pm2.sh [local|cloud|all]`
+- ✅ Local runs watchdog → orchestrator → local watchers
+- ✅ Cloud runs cloud_orchestrator → cloud watchers (Gmail, LinkedIn)
+- ✅ Fixed Windows CRLF line endings for WSL compatibility
+- ✅ Auto-restart on crash (max_restarts: 10, min_uptime: 10s)
+- ✅ PM2 save for auto-boot on system startup
+
+**5. Bug Fixes:**
+- ✅ Input guardrail false positive fixed (Instructions: pattern)
+- ✅ Odoo field compatibility fixed (`residual` → `amount_residual`)
+- ✅ CircuitBreaker parameters: `recovery_timeout` → `timeout`, `half_open_max_calls` → `half_open_attempts`
+- ✅ DeadLetterQueue parameters: `dlq_file` → `subdir`
+- ✅ HealthMonitor parameters: removed `health_file` (uses default)
+
+**6. Test Results:**
+- ✅ Comprehensive test passed - all 5 Odoo MCP tools executed successfully
+- ✅ Draft invoice created in Odoo (ID: 12, Amount: $1,200, State: DRAFT)
+- ✅ Agent handoffs working (Triage → Finance)
+- ✅ MCP server cleanup working (finally block)
+- ✅ Cloud Gmail watcher running and detecting emails
+- ✅ Cloud orchestrator processing EMAIL_*.md tasks
+- ✅ PM2 local deployment tested and working
+
+**Files Created:**
+- `ecosystem.local.config.js` - PM2 config for local environment
+- `ecosystem.cloud.config.js` - PM2 config for cloud environment
+- `start_pm2.sh` - Updated startup script with environment selection
+- `stop_pm2.sh` - Updated stop script with environment selection
+
+**Files Modified:**
+- `cloud/cloud_orchestrator.py` - Added MCPServerStdio import, per-request lifecycle, fixed watcher imports/methods
+- `cloud/bots/finance_agent.py` - Updated with Odoo MCP tool documentation
+- `cloud/guardrails/input_guardrails.py` - Fixed false positive pattern
+- `cloud/mcp_servers/odoo_server.py` - Fixed field compatibility
+- `cloud_watchers/base_cloud_watcher.py` - Fixed all parameter mismatches, added `retry_call()` helper
+- `cloud_watchers/gmail_watcher.py` - Fixed imports, unified state file format to `.txt`
+- `cloud_watchers/linkedin_watcher.py` - Fixed imports
+
+**Environment Variables Required for Cloud Watchers:**
+```bash
+# Cloud Orchestrator
+OPENAI_API_KEY=...
+XIAOMI_API_KEY=...
+MODEL_NAME=glm-4.7-flash
+VAULT_PATH=/path/to/AI_Employee_Vault
+AGENT_TYPE=cloud
+
+# Gmail Cloud Watcher
+GMAIL_CREDENTIALS_PATH=./cloud_credentials.json  # OR JSON string
+GMAIL_USER_EMAIL=me
+
+# LinkedIn Cloud Watcher
+LINKEDIN_ACCESS_TOKEN=...
+LINKEDIN_URN=...
+```
+
+**PM2 Usage (24/7 Operation):**
+```bash
+# Local environment
+./start_pm2.sh local
+./stop_pm2.sh local
+
+# Cloud environment (after updating paths in ecosystem.cloud.config.js)
+./start_pm2.sh cloud
+./stop_pm2.sh cloud
+
+# View logs
+pm2 logs ai-employee-local
+pm2 logs ai-employee-cloud
+
+# Process management
+pm2 list                    # Show all processes
+pm2 restart <name>          # Restart a process
+pm2 flush                   # Clear logs
+
+# Auto-start on boot
+pm2 save
+pm2 startup systemd
+```
 
 ---
 
@@ -317,6 +461,68 @@ All 12 Gold Tier requirements have been implemented:
 
 ---
 
+## Platinum Tier Requirements - IN PROGRESS 🔄
+
+**Status:** ~80% Complete (March 9, 2026)
+
+### Completed Components (Cloud Agent Architecture)
+
+| # | Component | Status | File |
+|---|-----------|--------|------|
+| 1 | Cloud Orchestrator | ✅ Complete | `cloud/cloud_orchestrator.py` |
+| 2 | Triage Agent with SDK Handoffs | ✅ Complete | `cloud/bots/triage_agent.py` |
+| 3 | Email Agent | ✅ Complete | `cloud/bots/email_agent.py` |
+| 4 | Social Agent | ✅ Complete | `cloud/bots/social_agent.py` |
+| 5 | Finance Agent | ✅ Complete | `cloud/bots/finance_agent.py` |
+| 6 | Base Agent Class | ✅ Complete | `cloud/bots/base_agent.py` |
+| 7 | File Tools (Vault Operations) | ✅ Complete | `cloud/tools/file_tools.py` |
+| 8 | Input Guardrails | ✅ Complete | `cloud/guardrails/input_guardrails.py` |
+| 9 | Output Guardrails | ✅ Complete | `cloud/guardrails/output_guardrails.py` |
+| 10 | Pydantic Models | ✅ Complete | `cloud/bots/models.py` |
+| 11 | GLM/Xiaomi API Integration | ✅ Complete | `cloud/config/__init__.py` |
+| 12 | MCP Server Integration | ✅ Complete | `cloud/mcp_servers/odoo_server.py` |
+| 13 | Base Cloud Watcher | ✅ Complete | `cloud_watchers/base_cloud_watcher.py` |
+| 14 | Cloud Gmail Watcher | ✅ Complete | `cloud_watchers/gmail_watcher.py` |
+| 15 | Cloud LinkedIn Watcher | ✅ Complete | `cloud_watchers/linkedin_watcher.py` |
+| 16 | PM2 Process Manager | ✅ Complete | `ecosystem.local.config.js`, `ecosystem.cloud.config.js` |
+| 17 | Vault Git Sync | ✅ Complete | `vault_sync.py` |
+
+### Odoo MCP Server - All Tools Working ✅
+
+| Tool | Purpose | Status |
+|------|---------|--------|
+| `search_partners()` | Search customers/vendors by name/email/phone | ✅ Working |
+| `get_customer()` | Get customer details (email, phone, balance) | ✅ Working |
+| `get_invoice_history()` | Get past invoices and payment status | ✅ Working (bug fixed) |
+| `get_pricing()` | Get pricing for services (consulting, dev, design, video) | ✅ Working |
+| `create_draft_invoice()` | Create draft invoice in Odoo | ✅ Working (Invoice #12 created) |
+
+### SDK Integration Features
+
+- ✅ **Per-Request MCP Lifecycle**: Create → Connect → Use → Cleanup
+- ✅ **Agent Handoffs**: Triage → Specialist (automatic via SDK)
+- ✅ **Guardrails**: Input/output tripwires blocking malicious content
+- ✅ **Tracing**: OpenAI Platform integration for debugging
+- ✅ **Draft Destination**: Writes to `Pending_Approval/` (not `Updates/`)
+- ✅ **Cloud Watchers**: Gmail + LinkedIn with unified state file format
+- ✅ **Error Recovery**: CircuitBreaker, retry, dead letter queue
+- ✅ **PM2 Process Manager**: 24/7 operation with auto-restart
+
+### Remaining Platinum Work (~15%)
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Cloud Deployment** | ⚠️ Partial | PM2 configs ready, need VM deployment & path updates |
+| **Git Sync** | ✅ Complete | `vault_sync.py` created - Cron-based Cloud ↔ Local via GitHub |
+| **Work-Zone Specialization** | ⚠️ Partial | Cloud drafts, Local approves - needs domain folders |
+| **Local Orchestrator Updates** | ⚠️ Partial | Monitor `Pending_Approval/` from cloud |
+| **Credential Separation** | ⚠️ Partial | Split cloud/local `.env` files |
+| **Odoo Cloud Deployment** | ❌ Not Started | Deploy Odoo on Cloud VM with HTTPS, backups |
+| **Platinum Demo Test** | ❌ Not Tested | Email → Cloud drafts → Local approves → Send |
+| **Monitoring** | ❌ Not Implemented | Health checks, alerts, cost tracking |
+
+---
+
 ## Demo Ready Components
 
 **Tier Declaration:** Gold ✅ COMPLETE (12/12 requirements - 100%)
@@ -347,19 +553,30 @@ All 12 Gold Tier requirements have been implemented:
 
 ## Next Steps
 
-**Gold Tier is COMPLETE!** 🎉
+**Gold Tier is COMPLETE!** 🎉 (February 26, 2026)
 
-All 12 Gold Tier requirements have been implemented and tested.
+**Platinum Tier - IN PROGRESS** 🔄 (March 13, 2026 - ~85% Complete)
 
-**Platinum Tier (Future):**
-Platinum Tier requires 24/7 cloud hosting with fallback to local. Key requirements:
-- Cloud instance (e.g., Fly.io, Railway) that runs 24/7
-- Local instance for development/fallback
-- A2A (Agent-to-Agent) communication between cloud and local
-- Shared state synchronization (Obsidian vault sync)
-- Automatic failover when cloud goes down
+### Completed So Far (Platinum):
+- ✅ Cloud Orchestrator with task monitoring
+- ✅ Triage Agent with SDK handoffs to specialists
+- ✅ Email, Social, Finance agents
+- ✅ Input/Output guardrails
+- ✅ Odoo MCP server integration (all 5 tools tested & working)
+- ✅ Per-request MCP lifecycle
+- ✅ Draft destination set to `Pending_Approval/`
+- ✅ **Vault Git Sync** - `vault_sync.py` with cron-based sync
 
-**Optional Enhancements:**
+### Remaining (Platinum):
+- ⬜ Cloud deployment (Oracle VM setup)
+- ⬜ Work-zone specialization (domain folders, claim-by-move rule)
+- ⬜ Local orchestrator updates (monitor `Pending_Approval/`)
+- ⬜ Credential separation (cloud/local `.env` split)
+- ⬜ Odoo cloud deployment (HTTPS, backups)
+- ⬜ Platinum demo test (Email → Cloud drafts → Local approves → Send)
+- ⬜ Health monitoring & alerts
+
+### Optional Enhancements:
 - WhatsApp Watcher for keyword monitoring
 - Additional social media platforms (TikTok, YouTube)
 - Advanced analytics dashboard
@@ -367,5 +584,6 @@ Platinum Tier requires 24/7 cloud hosting with fallback to local. Key requiremen
 
 ---
 
-*Last Updated: February 26, 2026*
+*Last Updated: March 13, 2026*
 *Generated for: Personal AI Employee Hackathon 0 Submission*
+*Branch: platinum-tier*

@@ -7,9 +7,25 @@ Monitors Needs_Action, routes to Triage Agent, writes drafts to Updates.
 
 import sys
 from pathlib import Path
-
+import os
+from dotenv import load_dotenv
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Load environment variables from .env file
+
+# Load .env FIRST, before any imports
+# .env is in ai_employee_scripts directory (parent of cloud/ directory)
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path, override=True)
+
+# Ensure OPENAI_API_KEY is in os.environ for SDK tracing
+# The OpenAI Agents SDK reads this to enable trace sending to platform.openai.com
+if openai_key := os.getenv("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = openai_key
+    print("[Tracing] OPENAI_API_KEY loaded - traces enabled")
+else:
+    print("[Tracing] Warning: OPENAI_API_KEY not found - tracing disabled")
 
 import asyncio
 import logging
@@ -18,6 +34,8 @@ from typing import Optional
 
 from agents import Agent, Runner, RunConfig
 from agents import OpenAIChatCompletionsModel, AsyncOpenAI
+from agents import InputGuardrailTripwireTriggered, OutputGuardrailTripwireTriggered
+from agents.mcp import MCPServerStdio
 
 from cloud.config import (
     get_xiaomi_client,
@@ -27,12 +45,10 @@ from cloud.config import (
     NEEDS_ACTION_CHECK_INTERVAL,
     VAULT_PATH
 )
-from cloud.bots.triage_agent import create_triage_agent, simple_triage
+from cloud.bots.triage_agent import create_triage_agent_with_handoffs
 from cloud.bots.email_agent import create_email_agent
 from cloud.bots.social_agent import create_social_agent
 from cloud.bots.finance_agent import create_finance_agent
-from cloud.guardrails.input_guardrails import check_input_safety_simple
-from cloud.guardrails.output_guardrails import check_output_safety_simple
 from cloud.bots.models import Category, Priority
 from cloud.tools.file_tools import (
     read_task,
@@ -75,7 +91,7 @@ class CloudOrchestrator:
     This implements the Platinum tier architecture:
     - Runs 24/7 on cloud VM
     - Processes tasks from Needs_Action/
-    - Routes via Triage Agent
+    - Routes via Triage Agent with SDK handoffs
     - Executes with specialist agents
     - Writes drafts to Updates/
     - Syncs via git for local to pick up
@@ -131,9 +147,15 @@ class CloudOrchestrator:
 
     @property
     def triage_agent(self) -> Agent:
-        """Lazy-initialize the triage agent."""
+        """Lazy-initialize the triage agent with handoffs to specialists."""
         if self._triage_agent is None:
-            self._triage_agent = create_triage_agent(self.model)
+            # SDK Pattern: Create triage agent with handoffs to specialist agents
+            self._triage_agent = create_triage_agent_with_handoffs(
+                email_agent=self.email_agent,
+                social_agent=self.social_agent,
+                finance_agent=self.finance_agent,
+                model=self.model
+            )
         return self._triage_agent
 
     @property
@@ -153,10 +175,73 @@ class CloudOrchestrator:
     @property
     def finance_agent(self) -> Agent:
         """Lazy-initialize the finance agent."""
-        self._finance_agent = None
         if self._finance_agent is None:
             self._finance_agent = create_finance_agent(self.model)
         return self._finance_agent
+
+    # =========================================================================
+    # CLOUD WATCHERS
+    # =========================================================================
+
+    def start_cloud_watchers(self):
+        """
+        Start cloud watchers for Gmail and LinkedIn.
+
+        Cloud watchers run in separate threads and create tasks in Needs_Action/.
+        They read credentials from .env instead of credentials.json.
+        """
+        import threading
+        import os
+        from cloud_watchers.gmail_watcher import CloudGmailWatcher
+        from cloud_watchers.linkedin_watcher import CloudLinkedInWatcher
+
+        self.watcher_threads = []
+        self.watchers_running = True
+
+        # Get dedup API URL from environment (default to localhost for cloud)
+        dedup_api_url = os.getenv("DEDUP_API_URL", "http://localhost:5000")
+
+        # Gmail watcher (checks every 2 minutes)
+        try:
+            gmail_watcher = CloudGmailWatcher(
+                vault_path=str(self.vault_path),
+                check_interval=120,
+                dedup_api_url=dedup_api_url
+            )
+            gmail_thread = threading.Thread(
+                target=gmail_watcher.run,
+                name="CloudGmailWatcher",
+                daemon=True
+            )
+            gmail_thread.start()
+            self.watcher_threads.append(gmail_thread)
+            self.logger.info("Started Gmail cloud watcher")
+        except Exception as e:
+            self.logger.error(f"Failed to start Gmail watcher: {e}")
+
+        # LinkedIn watcher (checks every 5 minutes)
+        try:
+            linkedin_watcher = CloudLinkedInWatcher(
+                vault_path=str(self.vault_path),
+                check_interval=300
+            )
+            linkedin_thread = threading.Thread(
+                target=linkedin_watcher.run,
+                name="CloudLinkedInWatcher",
+                daemon=True
+            )
+            linkedin_thread.start()
+            self.watcher_threads.append(linkedin_thread)
+            self.logger.info("Started LinkedIn cloud watcher")
+        except Exception as e:
+            self.logger.error(f"Failed to start LinkedIn watcher: {e}")
+
+        self.logger.info(f"Started {len(self.watcher_threads)} cloud watcher(s)")
+
+    def stop_cloud_watchers(self):
+        """Stop all cloud watchers."""
+        self.watchers_running = False
+        self.logger.info("Stopping cloud watchers")
 
     # =========================================================================
     # TASK PROCESSING
@@ -166,6 +251,9 @@ class CloudOrchestrator:
         """
         Process a single task through the agent pipeline.
 
+        Uses SDK's built-in handoff and guardrail execution.
+        Attaches MCP servers per-request for external service access.
+
         Args:
             task_filename: Name of the task file
 
@@ -174,88 +262,102 @@ class CloudOrchestrator:
         """
         self.logger.info(f"Processing task: {task_filename}")
 
+        # MCP server for this request (per-request lifecycle)
+        odoo_server = None
+
         try:
             # 1. Read task content
             task_content = await read_task(task_filename)
             self.logger.info(f"Task content read: {len(task_content)} bytes")
 
-            # 2. Input guardrail check
-            guardrail_check = check_input_safety_simple(task_content)
-            if guardrail_check.should_block:
-                self.logger.warning(f"Task blocked by guardrail: {guardrail_check.reasoning}")
-                await write_to_done(
-                    task_filename,
-                    f"Blocked by input guardrail: {guardrail_check.reasoning}",
-                    status="blocked"
-                )
-                return False
-
-            # 3. Move to In_Progress (claim the task)
+            # 2. Move to In_Progress (claim the task)
             in_progress_path = await move_to_in_progress(task_filename, agent="cloud")
             self.logger.info(f"Task claimed: {in_progress_path}")
 
-            # 4. Run triage (use simple rule-based for GLM compatibility)
-            from cloud.bots.triage_agent import simple_triage
-            decision = simple_triage(task_content)
-            self.logger.info(f"Triage: {decision.category} -> {decision.recommended_agent}")
-
-            # 5. Handle based on triage decision
-            if decision.can_auto_complete:
-                # Simple task - mark as done
-                await write_to_done(
-                    task_filename,
-                    f"Auto-completed: {decision.reasoning}",
-                    status="completed"
-                )
-                return True
-
-            # 6. Route to specialist agent
-            agent = self._get_specialist_agent(decision.category, decision.recommended_agent)
-
-            if agent is None:
-                self.logger.warning(f"No suitable agent for category: {decision.category}")
-                await write_to_done(
-                    task_filename,
-                    f"No suitable agent - {decision.reasoning}",
-                    status="failed"
-                )
-                return False
-
-            # 7. Execute with specialist agent
-            specialist_result = await Runner.run(
-                agent,
-                input=f"Task:\n{task_content}\n\nTriage: {decision.reasoning}",
-                run_config=self.config
+            # 3. Attach MCP server to FinanceAgent for Odoo access
+            # Only attach if finance_agent exists (lazy initialization)
+            odoo_server = MCPServerStdio(
+                params={
+                    "command": "uv",
+                    "args": ["run", "--directory", str(Path(__file__).parent), "mcp_servers/odoo_server.py"]
+                },
+                client_session_timeout_seconds=60
             )
 
-            # 8. Get output content (GLM returns text, not structured JSON)
-            output_content = str(specialist_result.final_output)
+            # Attach ONLY to finance_agent (specialist that needs Odoo)
+            self.finance_agent.mcp_servers = [odoo_server]
 
-            # 9. Output guardrail check
-            output_check = check_output_safety_simple(output_content)
+            try:
+                # Connect MCP server before running agent
+                await odoo_server.connect()
+                self.logger.info("Odoo MCP server connected")
 
-            if not output_check.is_appropriate:
-                self.logger.error(f"Output blocked: {output_check.reasoning}")
+                # 4. Execute with TriageAgent (SDK Pattern - automatic handoffs + guardrails)
+                # The triage agent will automatically hand off to the appropriate specialist
+                result = await Runner.run(
+                    self.triage_agent,  # TriageAgent with handoffs configured
+                    input=f"Process this task:\n{task_content}",
+                    run_config=self.config
+                )
+                output_content = str(result.final_output)
+
+                # Get the agent that handled the task (after handoff)
+                agent_name = result.last_agent.name
+                self.logger.info(f"Task handled by: {agent_name}")
+
+            except InputGuardrailTripwireTriggered as e:
+                # SDK blocked the input
+                self.logger.warning(f"Input guardrail blocked request: {e}")
                 await write_to_done(
                     task_filename,
-                    f"Output blocked: {output_check.reasoning}",
+                    f"Blocked by input guardrail",
                     status="blocked"
                 )
                 return False
 
-            # 10. Write draft to Updates/
-            draft_type = decision.category.value
+            except OutputGuardrailTripwireTriggered as e:
+                # SDK blocked the output
+                self.logger.error(f"Output guardrail blocked response: {e}")
+                await write_to_done(
+                    task_filename,
+                    f"Blocked by output guardrail",
+                    status="blocked"
+                )
+                return False
+
+            finally:
+                # 5. ALWAYS cleanup MCP server (even on guardrail triggers)
+                if odoo_server:
+                    await odoo_server.cleanup()
+                    self.logger.info("Odoo MCP server cleaned up")
+                # Clear agent's MCP server list
+                self.finance_agent.mcp_servers = []
+
+            # 6. Infer draft type from agent name
+            agent_name_lower = agent_name.lower()
+            if "email" in agent_name_lower:
+                draft_type = "email"
+            elif "social" in agent_name_lower:
+                draft_type = "social"
+            elif "finance" in agent_name_lower:
+                draft_type = "finance"
+            else:
+                draft_type = "unknown"
+            self.logger.info(f"Draft type: {draft_type}")
+
+            # 7. Write draft to Pending_Approval/
             draft_path = await write_draft(
                 content=output_content,
                 original_task=task_filename,
-                draft_type=draft_type
+                draft_type=draft_type,
+                original_content=task_content
             )
             self.logger.info(f"Draft written: {draft_path}")
 
-            # 10. Complete the task
+            # 8. Complete the task
             await write_to_done(
                 task_filename,
-                f"Draft created for {decision.category.value} task. {decision.reasoning}",
+                f"Draft created by {agent_name}",
                 status="completed"
             )
 
@@ -263,32 +365,14 @@ class CloudOrchestrator:
 
         except Exception as e:
             self.logger.error(f"Error processing task {task_filename}: {e}")
+            import traceback
+            self.logger.error(traceback.format_exc())
             await write_to_done(
                 task_filename,
                 f"Error: {str(e)}",
                 status="failed"
             )
             return False
-
-    def _get_specialist_agent(self, category: Category, recommended: str) -> Optional[Agent]:
-        """Get the appropriate specialist agent."""
-        if recommended:
-            if recommended == "email_agent":
-                return self.email_agent
-            elif recommended == "social_agent":
-                return self.social_agent
-            elif recommended == "finance_agent":
-                return self.finance_agent
-
-        # Fallback to category
-        if category == Category.EMAIL:
-            return self.email_agent
-        elif category == Category.SOCIAL:
-            return self.social_agent
-        elif category == Category.FINANCE:
-            return self.finance_agent
-
-        return None
 
     # =========================================================================
     # MAIN LOOP
@@ -304,8 +388,9 @@ class CloudOrchestrator:
 
         while self.running:
             try:
-                # Check for new tasks
+                # Check for new tasks (supports TASK_*.md and EMAIL_*.md patterns)
                 task_files = list(self.folders["needs_action"].glob("TASK_*.md"))
+                task_files.extend(list(self.folders["needs_action"].glob("EMAIL_*.md")))
 
                 if task_files:
                     self.logger.info(f"Found {len(task_files)} task(s) to process")
@@ -338,8 +423,13 @@ async def main():
     orchestrator = CloudOrchestrator()
 
     try:
+        # Start cloud watchers (Gmail, LinkedIn)
+        orchestrator.start_cloud_watchers()
+
+        # Enter monitoring loop
         await orchestrator.monitor_and_process()
     except KeyboardInterrupt:
+        orchestrator.stop_cloud_watchers()
         orchestrator.stop()
         print("\nShutdown complete")
 

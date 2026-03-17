@@ -8,6 +8,8 @@ Part B: Advanced Workflows - Multi-Agent Handoffs
 from agents import Agent
 from cloud.bots.models import TriageDecision, Category, Priority
 from cloud.bots.base_agent import create_base_agent, get_common_tools
+from cloud.guardrails.input_guardrails import input_safety_check
+from cloud.guardrails.output_guardrails import output_safety_check
 
 
 # ============================================================================
@@ -99,7 +101,7 @@ def create_triage_agent_with_handoffs(
         model: The model to use
 
     Returns:
-        Agent: Triage agent with handoff configuration
+        Agent: Triage agent with handoff configuration and guardrails
     """
     handoff_instructions = """
 You are the Triage Agent with handoff capability.
@@ -113,12 +115,15 @@ The specialist agent will take over and handle the complete task.
 Do NOT try to handle it yourself - use handoffs.
 """
 
+    # Create agent with handoffs AND guardrails
     return Agent(
         name="TriageAgent",
         instructions=handoff_instructions,
         handoffs=[email_agent, social_agent, finance_agent],
         tools=get_common_tools(),
-        model=model
+        model=model,
+        input_guardrails=[input_safety_check],
+        output_guardrails=[output_safety_check]
     )
 
 

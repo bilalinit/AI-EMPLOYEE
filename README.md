@@ -2,7 +2,7 @@
 
 **A fully autonomous AI employee that monitors your digital life and handles business operations automatically.**
 
-Built for the **Personal AI Employee Hackathon 0** - Gold Tier Complete (12/12 requirements - 100%)
+Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (~85% Complete)
 
 ---
 
@@ -14,7 +14,7 @@ Built for the **Personal AI Employee Hackathon 0** - Gold Tier Complete (12/12 r
 ███████████████████████████████████████████  BRONZE  ███████████████████████████████████████████
 ███████████████████████████████████████████  SILVER  ███████████████████████████████████████████
 ███████████████████████████████████████████   GOLD   ███████████████████████████████████████████
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ PLATINUM ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+██████████████████████████████████████░░░░ PLATINUM ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Tier | Status | Requirements | Completion Date |
@@ -22,9 +22,9 @@ Built for the **Personal AI Employee Hackathon 0** - Gold Tier Complete (12/12 r
 | **Bronze** | ✅ Complete | 4/4 | February 15, 2026 |
 | **Silver** | ✅ Complete | 4/4 | February 21, 2026 |
 | **Gold** | ✅ Complete | 12/12 | February 26, 2026 |
-| **Platinum** | ❌ Not Started | TBD | - |
+| **Platinum** | 🔄 In Progress | ~85% | March 2026 |
 
-### Overall Progress: **upto Gold tier Complete** (3 of 4 Tiers)
+### Overall Progress: **3.85 of 4 Tiers Complete**
 
 #### Bronze Tier ✅
 - FileSystemWatcher with drop folder monitoring
@@ -52,11 +52,17 @@ Built for the **Personal AI Employee Hackathon 0** - Gold Tier Complete (12/12 r
 - Ralph Wiggum stop hook
 - **12 Agent Skills** for complete automation
 
-#### Platinum Tier (Future)
-- 24/7 cloud hosting with fallback to local
-- Agent-to-Agent (A2A) communication
-- Work-zone specialization
-- Multi-cloud deployment
+#### Platinum Tier 🔄 (~85% Complete)
+- ✅ Cloud Orchestrator with task monitoring
+- ✅ Triage Agent with SDK handoffs to specialists
+- ✅ Email, Social, Finance agents
+- ✅ Input/Output guardrails
+- ✅ Odoo MCP server integration (all 5 tools tested)
+- ✅ Per-request MCP lifecycle
+- ✅ PM2 Process Manager (24/7 operation)
+- ✅ Vault Git Sync (Cloud ↔ Local via GitHub)
+- ⬜ Cloud deployment (Oracle VM setup)
+- ⬜ Work-zone specialization (Cloud drafts, Local approves)
 
 ---
 
@@ -64,14 +70,17 @@ Built for the **Personal AI Employee Hackathon 0** - Gold Tier Complete (12/12 r
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Cloud Agent Architecture](#cloud-agent-architecture-platinum-tier)
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [PM2 Process Management](#pm2-process-management)
 - [Components](#components)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 - [License](#license)
 
 ---
@@ -95,14 +104,7 @@ The Personal AI Employee is a 24/7 autonomous system that perceives, reasons abo
 | **Accounting** | Creates invoices in Odoo, tracks revenue and expenses |
 | **Files** | Monitors drop folder for new files and tasks |
 | **Reporting** | Generates weekly CEO briefings with financial and activity summaries |
-
----
-
-### Error Recovery (3-Layer Architecture)
-
-1. **External Watchdog** - Monitors and restarts orchestrator if it crashes
-2. **Internal Watchdog** - Orchestrator restarts crashed watchers
-3. **Operation-Level** - Retry with exponential backoff, circuit breaker, dead letter queue
+| **Cloud (Platinum)** | 24/7 cloud operation with local approval workflow |
 
 ---
 
@@ -117,6 +119,7 @@ The Personal AI Employee is a 24/7 autonomous system that perceives, reasons abo
                     ║  1. Cron Jobs (Scheduled Automation)       ║
                     ║  2. Claude Code Skills (Interactive)       ║
                     ║  3. Watchdog.py (Production Monitoring)    ║
+                    ║  4. Cloud Orchestrator (Platinum Tier)     ║
                     ╚═════════════════════════════════════════════╝
                                      │
                     ┌────────────────┴────────────────┐
@@ -193,102 +196,130 @@ The Personal AI Employee is a 24/7 autonomous system that perceives, reasons abo
                  Sunday 5 AM → CEO Briefing → Email to You
 ```
 
-### Data Flow
+---
+
+## Cloud Agent Architecture (Platinum Tier)
+
+### Work-Zone Specialization
+
+The Platinum tier introduces **Cloud + Local** work zones:
 
 ```
-1. PERCEPTION (Watchers)
-   ├─ FileSystemWatcher → Monitors drop_folder/ for new files
-   ├─ GmailWatcher      → Polls Gmail every 2 min for new emails
-   └─ LinkedInWatcher   → Polls LinkedIn every 5 min for messages
-          │
-          ▼
-2. TRIGGER (Orchestrator detects new files in Needs_Action/)
-          │
-          ▼
-3. REASONING (Claude Code via /process-tasks skill)
-   ├─ Reads task file
-   ├─ Analyzes content
-   ├─ Creates execution plan (if needed)
-   └─ Generates approval request
-          │
-          ▼
-4. APPROVAL (Human-in-the-loop)
-   ├─ Pending_Approval/ → Human reviews
-   ├─ Approved/ → Ready to execute
-   └─ Rejected/ → Cancelled
-          │
-          ▼
-5. ACTION (MCP Servers via /execute-approved skill)
-   ├─ Post to social media
-   ├─ Send emails
-   ├─ Create invoices
-   └─ Log results
-          │
-          ▼
-6. COMPLETION (Done/)
-   └─ Summary with results and logs
+┌─────────────────────────────────┐    ┌─────────────────────────────┐
+│         CLOUD ZONE              │    │        LOCAL ZONE           │
+│   (Oracle VM / AWS / GCP)       │    │   (WSL / Development PC)    │
+├─────────────────────────────────┤    ├─────────────────────────────┤
+│                                 │    │                             │
+│  ┌─────────────────────────┐    │    │    ┌─────────────────┐      │
+│  │     PM2 Process         │    │    │    │  PM2 Process    │      │
+│  │  ai-employee-cloud      │    │    │    │ ai-employee-local│     │
+│  └───────────┬─────────────┘    │    │    └────────┬────────┘      │
+│              │                   │    │             │               │
+│  ┌───────────▼─────────────┐    │    │    ┌────────▼────────┐      │
+│  │  Cloud Orchestrator     │    │    │    │   Orchestrator  │      │
+│  │  (cloud_orchestrator.py)│    │    │    │  (orchestrator.py)│     │
+│  └───────────┬─────────────┘    │    │    └────────┬────────┘      │
+│              │                   │    │             │               │
+│  ┌───────────▼─────────────┐    │    │    ┌────────▼────────┐      │
+│  │  Cloud Agents           │    │    │    │  Claude Code    │      │
+│  │  - TriageAgent          │    │    │    │  (Human Review) │      │
+│  │  - EmailAgent           │────┼────┼───▶│                 │      │
+│  │  - SocialAgent          │    │    │    │  /process-tasks │      │
+│  │  - FinanceAgent         │    │    │    │  /execute-approved│    │
+│  └───────────┬─────────────┘    │    │    └─────────────────┘      │
+│              │                   │    │                             │
+│  ┌───────────▼─────────────┐    │    │                             │
+│  │  Pending_Approval/      │    │    │                             │
+│  │  (Drafts from cloud)    │────┼───▶│  Human reviews & approves   │
+│  └─────────────────────────┘    │    │                             │
+│                                 │    │                             │
+│  ┌─────────────────────────┐    │    │                             │
+│  │   vault_sync.py         │◄───┼───▶│  vault_sync.py              │
+│  │   (Git-based sync)      │    │    │  (Git-based sync)           │
+│  └─────────────────────────┘    │    │                             │
+│                                 │    │                             │
+└─────────────────────────────────┘    └─────────────────────────────┘
+                  │                                    │
+                  └──────────── GitHub ────────────────┘
+                        (platinum-tier branch)
 ```
 
-### Error Recovery Layers
+### Cloud Agent Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **TriageAgent** | `cloud/bots/triage_agent.py` | Routes tasks to specialists |
+| **EmailAgent** | `cloud/bots/email_agent.py` | Drafts email responses |
+| **SocialAgent** | `cloud/bots/social_agent.py` | Creates social content |
+| **FinanceAgent** | `cloud/bots/finance_agent.py` | Odoo operations, invoices |
+| **InputGuardrails** | `cloud/guardrails/input_guardrails.py` | Blocks prompt injection |
+| **OutputGuardrails** | `cloud/guardrails/output_guardrails.py` | Filters sensitive output |
+
+### Agent Handoff Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ LAYER 1: External Watchdog (watchdog.py)                    │
-│ ─────────────────────────────────────────────────────────── │
-│ Monitors orchestrator.py process                            │
-│ If orchestrator dies → Restart automatically                │
-│ Check interval: 60 seconds                                  │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│ LAYER 2: Internal Watchdog (orchestrator.py)                │
-│ ─────────────────────────────────────────────────────────── │
-│ Orchestrator monitors all watcher processes                 │
-│ If watcher dies → Restart with full configuration           │
-│ Log: watcher_restarts.jsonl                                 │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│ LAYER 3: Operation-Level Recovery (error_recovery.py)       │
-│ ─────────────────────────────────────────────────────────── │
-│ • Retry Decorator      → 3 attempts, exponential backoff    │
-│ • Circuit Breaker      → Opens after 5 failures (60s cooldown)│
-│ • Dead Letter Queue    → Failed items to Failed/ folder     │
-│ • Health Monitor       → Track component status             │
-└─────────────────────────────────────────────────────────────┘
+Task arrives in Needs_Action/
+              │
+              ▼
+    ┌─────────────────┐
+    │  TriageAgent    │
+    │  (Task Router)  │
+    └────────┬────────┘
+             │
+    ┌────────┼────────┐
+    │        │        │
+    ▼        ▼        ▼
+┌───────┐ ┌───────┐ ┌───────────┐
+│ Email │ │Social │ │  Finance  │
+│ Agent │ │ Agent │ │   Agent   │
+└───┬───┘ └───┬───┘ └─────┬─────┘
+    │         │           │
+    └─────────┴───────────┘
+              │
+              ▼
+    Pending_Approval/ (Human reviews)
 ```
 
 ---
 
 ## Features
 
-### Bronze Tier (Complete)
-- ✅ FileSystemWatcher for drop folder monitoring
-- ✅ Task processing pipeline (Needs_Action → Plans → Done)
-- ✅ 4 core agent skills (start/stop watcher, process tasks, create plan, complete task)
-- ✅ Obsidian vault for memory and dashboard
-- ✅ Company handbook with approval rules
+### All Tiers
 
-### Silver Tier (Complete)
-- ✅ GmailWatcher for email monitoring
-- ✅ MCP servers for Gmail and LinkedIn
-- ✅ LinkedIn posting skill
-- ✅ Email processing and categorization
-- ✅ Human approval workflow
+#### Bronze Tier ✅
+- FileSystemWatcher for drop folder monitoring
+- Task processing pipeline (Needs_Action → Plans → Done)
+- 4 core agent skills
+- Obsidian vault for memory and dashboard
+- Company handbook with approval rules
 
-### Gold Tier (Complete)
-- ✅ Full cross-domain integration (Personal + Business)
-- ✅ Odoo Accounting (self-hosted, local, MCP)
-- ✅ Facebook/Instagram posting via Meta Graph API
-- ✅ Twitter/X posting
-- ✅ 6 MCP servers (Gmail, LinkedIn API, LinkedIn Playwright, Meta, Twitter, Odoo)
-- ✅ Weekly CEO Briefing with automatic email delivery
-- ✅ 3-layer error recovery (watchdog, retry, circuit breaker, DLQ)
-- ✅ Comprehensive audit logging
-- ✅ Ralph Wiggum stop hook (blocks exit until tasks complete)
-- ✅ All AI as Agent Skills (12 skills total)
+#### Silver Tier ✅
+- GmailWatcher for email monitoring
+- MCP servers for Gmail and LinkedIn
+- LinkedIn posting skill
+- Email processing and categorization
+- Human approval workflow
+
+#### Gold Tier ✅
+- Full cross-domain integration (Personal + Business)
+- Odoo Accounting (self-hosted, local, MCP)
+- Facebook/Instagram posting via Meta Graph API
+- Twitter/X posting
+- 6 MCP servers
+- Weekly CEO Briefing with automatic email delivery
+- 3-layer error recovery
+- Comprehensive audit logging
+- Ralph Wiggum stop hook
+- 12 Agent Skills
+
+#### Platinum Tier 🔄
+- Cloud Orchestrator for 24/7 operation
+- Specialist agents (Email, Social, Finance)
+- SDK automatic handoffs
+- Input/Output guardrails
+- PM2 process management
+- Vault Git sync (Cloud ↔ Local)
+- Work-zone specialization
 
 ---
 
@@ -298,11 +329,9 @@ The Personal AI Employee is a 24/7 autonomous system that perceives, reasons abo
 
 - **Python 3.13+** (managed via UV)
 - **Docker & Docker Compose** (for Odoo)
-- **Claude Code CLI** (with Opus 4.6)
-- **LinkedIn Developer Account** (for OAuth)
-- **Meta Developer Account** (for Facebook/Instagram)
-- **Twitter/X Developer Account** (for posting)
-- **Gmail Account** (with OAuth)
+- **Claude Code CLI** (with Claude 4.6)
+- **PM2** (for 24/7 process management)
+- API credentials for: LinkedIn, Meta, Twitter, Gmail
 
 ### 1. Clone and Install
 
@@ -326,32 +355,6 @@ cp .env.example .env
 nano .env
 ```
 
-Required credentials:
-```bash
-# LinkedIn (OAuth)
-LINKEDIN_CLIENT_ID=your_client_id
-LINKEDIN_CLIENT_SECRET=your_client_secret
-LINKEDIN_ACCESS_TOKEN=your_access_token
-
-# Twitter/X API
-X_API_KEY=your_api_key
-X_API_SECRET=your_api_secret
-X_ACCESS_TOKEN=your_access_token
-X_ACCESS_TOKEN_SECRET=your_access_token_secret
-
-# Meta (Facebook/Instagram)
-META_ACCESS_TOKEN=your_access_token
-META_PAGE_ID=your_page_id
-
-# Odoo Accounting
-ODOO_URL=http://localhost:8069
-ODOO_DB=odoo
-ODOO_USER=your_email
-ODOO_PASSWORD=your_password
-
-# Gmail (OAuth) - credentials.json and token_gmail.json
-```
-
 ### 3. Start Odoo (Accounting)
 
 ```bash
@@ -359,19 +362,31 @@ cd "/mnt/d/coding Q4/hackathon-0/save-1"
 docker-compose up -d
 
 # Access Odoo at http://localhost:8069
-# Initial setup: Create database, install Invoicing app
 ```
 
 ### 4. Start the AI Employee
 
+#### Local Mode (Development)
 ```bash
-cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
-
-# Option 1: Start orchestrator directly
+cd ai_employee_scripts
 uv run python orchestrator.py ../AI_Employee_Vault
+```
 
-# Option 2: Start with watchdog (recommended for 24/7)
-uv run python watchdog.py
+#### PM2 Mode (24/7 Operation)
+```bash
+cd ai_employee_scripts
+
+# Start local services
+./start_pm2.sh local
+
+# View logs
+pm2 logs ai-employee-local
+```
+
+#### Cloud Mode (Platinum)
+```bash
+# On cloud VM
+./start_pm2.sh cloud
 ```
 
 ### 5. Setup Cron Jobs (Automated Posting)
@@ -380,19 +395,22 @@ uv run python watchdog.py
 crontab -e
 ```
 
-Add these entries:
+Add:
 ```bash
 # LinkedIn post daily at 2 AM
 0 2 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/linkedin_cron_trigger.py >> ../AI_Employee_Vault/Logs/cron.log 2>&1
 
-# Facebook/Instagram post daily at 3 AM
+# Meta post daily at 3 AM
 0 3 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/meta_cron_trigger.py >> ../AI_Employee_Vault/Logs/meta_cron.log 2>&1
 
 # Twitter post daily at 4 AM
 0 4 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/twitter_cron_trigger.py >> ../AI_Employee_Vault/Logs/twitter_cron.log 2>&1
 
-# Weekly CEO Briefing on Sunday at 5 AM
+# Weekly CEO Briefing Sunday at 5 AM
 0 5 * * 0 cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/weekly_cron_trigger.py >> ../AI_Employee_Vault/Logs/weekly_cron.log 2>&1
+
+# Vault sync every 5 minutes (Platinum)
+*/5 * * * * cd "/mnt/d/coding Q4/hackathon-0/save-1" && uv run python ai_employee_scripts/vault_sync.py >> AI_Employee_Vault/Logs/vault_sync.log 2>&1
 ```
 
 ---
@@ -404,50 +422,34 @@ Add these entries:
 #### 1. LinkedIn OAuth Setup
 
 ```bash
-# Run the OAuth callback server
 python get_token.py
-
-# 1. Open the displayed URL in your browser
-# 2. Authorize the application
-# 3. Copy the displayed access token
-# 4. Add to .env as LINKEDIN_ACCESS_TOKEN
+# Follow prompts, add token to .env
 ```
 
 #### 2. Gmail OAuth Setup
 
-Gmail OAuth credentials are stored in:
-- `credentials.json` - OAuth client credentials
-- `token_gmail.json` - Refresh token (auto-generated on first run)
-
 Get credentials from: https://console.cloud.google.com/
+Place `credentials.json` in `ai_employee_scripts/`
 
 #### 3. Meta (Facebook/Instagram) Setup
 
-1. Create a Meta Developer Account
-2. Create a Facebook Page
-3. Link Instagram Business Account to Page
-4. Generate Page Access Token with `pages_read_engagement`, `pages_manage_posts`
-5. Add `META_ACCESS_TOKEN` and `META_PAGE_ID` to .env
+1. Create Meta Developer Account
+2. Create Facebook Page
+3. Generate Page Access Token
+4. Add to `.env`
 
 #### 4. Twitter/X Setup
 
-1. Create Twitter/X Developer Account
-2. Create a Project and App
-3. Generate API Key, API Secret, Access Token, Access Token Secret
-4. Add to .env
-
-**Note:** Twitter/X posting requires API credits for live posting (402 Payment Required if at limits).
+1. Create Twitter Developer Account
+2. Generate API keys
+3. Add to `.env`
 
 #### 5. Odoo Setup
 
 ```bash
-# Start containers
 docker-compose up -d
-
-# Access at http://localhost:8069
-# Create database: "odoo"
-# Install "Invoicing" app
-# Create user matching .env credentials
+# Access http://localhost:8069
+# Create database, install Invoicing
 ```
 
 ---
@@ -456,19 +458,18 @@ docker-compose up -d
 
 ### MCP Server Configuration
 
-Located in `.claude/settings.local.json`:
+Located in `AI_Employee_Vault/.mcp.json`:
 
 ```json
 {
-  "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "ai-gmail",
-    "linkedin-mcp",
-    "linkedin-api",
-    "odoo",
-    "twitter-api",
-    "meta"
-  ]
+  "mcpServers": {
+    "ai-gmail": { ... },
+    "linkedin-api": { ... },
+    "linkedin-mcp": { ... },
+    "twitter-api": { ... },
+    "odoo": { ... },
+    "meta": { ... }
+  }
 }
 ```
 
@@ -484,13 +485,11 @@ AI_Employee_Vault/
 ├── Rejected/           # Human-rejected actions
 ├── Done/               # Completed tasks/summaries
 ├── Failed/             # Failed items (dead letter queue)
+├── In_Progress/        # Work-in-progress (Platinum)
 ├── Logs/               # System logs
 ├── Accounting/         # Financial records
 ├── Briefings/          # CEO briefings
 ├── Content_To_Post/    # Queued social media content
-│   ├── queued/
-│   ├── posted/
-│   └── rejected/
 ├── Company_Handbook.md # Rules and approval thresholds
 ├── Dashboard.md        # System status overview
 └── Business_Goals.md   # Business objectives
@@ -501,8 +500,6 @@ AI_Employee_Vault/
 ## Usage
 
 ### Agent Skills
-
-Use these slash commands in Claude Code:
 
 | Command | Description |
 |---------|-------------|
@@ -519,29 +516,35 @@ Use these slash commands in Claude Code:
 | `/check-accounting` | Query Odoo for invoices, payments, revenue, expenses |
 | `/weekly-audit` | Generate CEO Briefing with Odoo financial data |
 
-### Workflow Example
+---
 
-1. **Drop a file** in `drop_folder/` → FileSystemWatcher detects it
-2. **Task created** in `Needs_Action/TASK_*.md`
-3. **Run `/process-tasks`** → Claude Code analyzes and creates plan
-4. **Review plan** in `Plans/PLAN_*.md`
-5. **Approval request** created in `Pending_Approval/`
-6. **Human approves** → Move to `Approved/`
-7. **Run `/execute-approved`** → Actions executed via MCP servers
-8. **Summary** created in `Done/`
+## PM2 Process Management
 
-### Cron Automation
+### Configuration Files
 
-Daily at 2 AM, 3 AM, 4 AM:
-- Cron trigger generates social media post
-- Creates approval file in `Pending_Approval/`
-- Human reviews and approves
-- `/execute-approved` posts to platform
+| File | Environment |
+|------|-------------|
+| `ecosystem.local.config.js` | Local (WSL) |
+| `ecosystem.cloud.config.js` | Cloud (Oracle VM) |
 
-Weekly Sunday at 5 AM:
-- Generates CEO Briefing
-- Emails briefing automatically
-- Includes revenue, expenses, social media stats, email activity
+### Commands
+
+```bash
+# Start services
+./start_pm2.sh local    # Local environment
+./start_pm2.sh cloud    # Cloud environment
+
+# View status
+pm2 list
+pm2 logs ai-employee-local
+
+# Stop services
+./stop_pm2.sh local
+
+# Auto-start on boot
+pm2 save
+pm2 startup systemd
+```
 
 ---
 
@@ -559,36 +562,29 @@ Weekly Sunday at 5 AM:
 
 | MCP Server | Tools Provided | Purpose |
 |------------|----------------|---------|
-| **gmail_mcp.py** | send_email, read_email, search_emails, list_emails, draft_email | Gmail operations via OAuth |
-| **linkedin_api_mcp.py** | post_to_linkedin, get_linkedin_profile | LinkedIn posting via REST API |
-| **linkedin_mcp.py** | post_content, reply_message, get_messages, verify_connection | LinkedIn via Playwright |
-| **meta_mcp.py** | post_to_facebook, post_to_instagram, post_to_both, get_meta_profile | Facebook/Instagram posting |
-| **twitter_mcp.py** | post_tweet, post_business_update, get_twitter_profile | Twitter/X posting |
-| **odoo_mcp.py** | get_invoices, get_payments, get_revenue, get_expenses, create_draft_invoice, post_invoice | Odoo Accounting |
+| **gmail_mcp.py** | send_email, read_email, search_emails | Gmail operations |
+| **linkedin_api_mcp.py** | post_to_linkedin | LinkedIn posting via API |
+| **linkedin_mcp.py** | post_content, reply_message | LinkedIn via Playwright |
+| **meta_mcp.py** | post_to_facebook, post_to_instagram | FB/IG posting |
+| **twitter_mcp.py** | post_tweet | Twitter/X posting |
+| **odoo_mcp.py** | create_draft_invoice, get_revenue | Odoo Accounting |
 
-### Error Recovery
+### Cloud Agents (4 Total - Platinum)
 
-| Component | Purpose | File |
-|-----------|---------|------|
-| **Watchdog** | External process monitor for orchestrator | `watchdog.py` |
-| **Error Recovery** | Retry, circuit breaker, dead letter queue | `error_recovery.py` |
-| **Base Watcher** | Abstract base with error recovery built-in | `watchers/base_watcher.py` |
-| **Orchestrator** | Internal watchdog for watcher processes | `orchestrator.py` |
+| Agent | Purpose |
+|-------|---------|
+| **TriageAgent** | Routes tasks to specialists |
+| **EmailAgent** | Drafts email responses |
+| **SocialAgent** | Creates social content |
+| **FinanceAgent** | Odoo operations |
 
-### Log Files
+### Error Recovery (3 Layers)
 
-| File | Purpose |
-|------|---------|
-| `Logs/cron.log` | LinkedIn cron output |
-| `Logs/meta_cron.log` | Facebook/Instagram cron output |
-| `Logs/twitter_cron.log` | Twitter cron output |
-| `Logs/weekly_cron.log` | CEO briefing cron output |
-| `Logs/watchdog.log` | Watchdog events |
-| `Logs/health_status.json` | Component health status |
-| `Logs/circuit_breakers.json` | Circuit breaker states (dynamic) |
-| `Logs/dead_letter_queue.jsonl` | Failed items (dynamic) |
-| `Logs/watcher_restarts.jsonl` | Watcher restart events (dynamic) |
-| `Logs/process_events.jsonl` | Process lifecycle events |
+| Layer | Component | Purpose |
+|-------|-----------|---------|
+| 1 | watchdog.py | Monitors orchestrator, auto-restart |
+| 2 | orchestrator.py | Restarts crashed watchers |
+| 3 | error_recovery.py | Retry, circuit breaker, DLQ |
 
 ---
 
@@ -599,106 +595,64 @@ Weekly Sunday at 5 AM:
 ```
 /mnt/d/coding Q4/hackathon-0/save-1/
 ├── AI_Employee_Vault/         # Obsidian vault (data/memory)
-├── ai_employee_scripts/       # Python code (never syncs - has secrets)
+├── ai_employee_scripts/       # Python code
 │   ├── watchers/              # Watcher scripts
 │   ├── mcp_servers/           # MCP server implementations
 │   ├── scripts/               # Cron trigger scripts
-│   ├── orchestrator.py        # Master controller
+│   ├── cloud/                 # Cloud agent architecture (Platinum)
+│   │   ├── bots/              # Agent implementations
+│   │   ├── guardrails/        # Input/output guardrails
+│   │   ├── tools/             # File and git tools
+│   │   └── mcp_servers/       # Cloud MCP servers
+│   ├── cloud_watchers/        # Cloud-specific watchers
+│   ├── orchestrator.py        # Local master controller
+│   ├── cloud_orchestrator.py  # Cloud master controller
 │   ├── watchdog.py            # External watchdog
+│   ├── vault_sync.py          # Git-based vault sync
 │   ├── error_recovery.py      # Error handling utilities
-│   ├── main.py                # CLI entry point
-│   ├── pyproject.toml         # UV dependencies
 │   └── .env                   # API credentials
 ├── drop_folder/               # External input staging
 ├── .claude/                   # Claude Code configuration
-│   ├── skills/                # Agent skill definitions
-│   ├── hooks/                 # Hook scripts
-│   └── settings.local.json    # MCP server config
+│   └── skills/                # Agent skill definitions (12)
+├── documentation/             # Project documentation
 ├── docker-compose.yml         # Odoo + PostgreSQL
-├── get_token.py               # LinkedIn OAuth helper
 └── README.md                  # This file
-```
-
-### Adding a New Watcher
-
-1. Inherit from `BaseWatcher` in `watchers/base_watcher.py`
-2. Implement abstract methods:
-   - `check_for_updates()` - Return list of new items
-   - `create_action_file(item)` - Create .md in Needs_Action
-   - `get_item_id(item)` - Return unique identifier
-3. Use polling instead of inotify for WSL compatibility
-4. Add to `orchestrator.py` watcher configs
-
-### Python Dependencies
-
-```toml
-[dependencies]
-mcp = ">=1.2.0"
-httpx = ">=0.27.0"
-google-api-python-client = ">=2.189.0"
-google-auth = ">=2.48.0"
-google-auth-oauthlib = ">=1.2.4"
-playwright = ">=1.58.0"
-watchdog = ">=6.0.0"
-odoorpc = ">=0.10.1"
-tweepy = ">=4.14.0"
 ```
 
 ---
 
 ## Troubleshooting
 
-### Watchdog says "Orchestrator already running" but it's not
+### Common Issues
 
-Kill stale processes:
-```bash
-ps aux | grep orchestrator
-kill <pid>
-# Or remove PID file manually
-rm /tmp/ai_employee_orchestrator.pid
-```
+| Issue | Solution |
+|-------|----------|
+| **Watchdog says "already running"** | `rm /tmp/ai_employee_orchestrator.pid` |
+| **Gmail auth fails** | `rm token_gmail.json`, re-auth |
+| **Odoo connection refused** | `docker-compose up -d` |
+| **LinkedIn 401** | Run `python get_token.py`, update .env |
+| **Twitter 402** | Check X API credits |
+| **Ralph Wiggum blocking** | `touch AI_Employee_Vault/stop_ralph` |
+| **Circuit breaker open** | Wait 60s or `rm Logs/circuit_breakers.json` |
+| **PM2 won't start** | Check paths in ecosystem.*.config.js |
 
-### Gmail authentication fails
+---
 
-Delete old token and re-authenticate:
-```bash
-rm ai_employee_scripts/token_gmail.json
-# Re-run orchestrator - it will prompt for OAuth
-```
+## Documentation
 
-### Odoo connection refused
+Full documentation available in `documentation/`:
 
-Make sure Docker containers are running:
-```bash
-docker-compose ps
-docker-compose up -d
-```
-
-### LinkedIn posting fails (401 Unauthorized)
-
-Access token expired. Run OAuth again:
-```bash
-python get_token.py
-# Copy new token to .env
-```
-
-### Twitter posting returns 402 Payment Required
-
-Twitter API has rate limits or requires credits. Check your X API dashboard.
-
-### Ralph Wiggum hook blocking exit
-
-Either complete pending tasks or use emergency override:
-```bash
-touch AI_Employee_Vault/stop_ralph
-```
-
-### Circuit breaker is open
-
-Wait 60 seconds for cooldown, or manually reset:
-```bash
-rm AI_Employee_Vault/Logs/circuit_breakers.json
-```
+| Document | Purpose |
+|----------|---------|
+| [INDEX.md](documentation/INDEX.md) | Documentation navigation |
+| [getting-started.md](documentation/getting-started.md) | Setup guide |
+| [cloud-deployment.md](documentation/cloud-deployment.md) | Platinum tier deployment |
+| [agent-skills-reference.md](documentation/agent-skills-reference.md) | All 12 skills |
+| [vault-structure.md](documentation/vault-structure.md) | Vault organization |
+| [configuration-reference.md](documentation/configuration-reference.md) | Config files |
+| [security-credentials.md](documentation/security-credentials.md) | Credential setup |
+| [error-recovery-reference.md](documentation/error-recovery-reference.md) | Error handling |
+| [cron-jobs-reference.md](documentation/cron-jobs-reference.md) | Scheduled tasks |
 
 ---
 
@@ -706,12 +660,13 @@ rm AI_Employee_Vault/Logs/circuit_breakers.json
 
 | Metric | Count |
 |--------|-------|
-| **Tiers Completed** | 3 (Bronze, Silver, Gold) |
+| **Tiers Completed** | 3 + Platinum (85%) |
 | **Watchers** | 3 |
 | **MCP Servers** | 6 |
 | **Agent Skills** | 12 |
-| **Cron Jobs** | 4 (3 daily + 1 weekly) |
-| **Error Recovery Components** | 4 |
+| **Cloud Agents** | 4 |
+| **Cron Jobs** | 5 (4 daily + vault sync) |
+| **Error Recovery Layers** | 3 |
 
 ---
 
@@ -721,8 +676,8 @@ This project is part of the Personal AI Employee Hackathon 0.
 
 ---
 
-**Built with:** Claude Code, Python, UV, Docker, Odoo, Obsidian
+**Built with:** Claude Code, Python, UV, Docker, Odoo, Obsidian, OpenAI Agents SDK
 
-**Last Updated:** February 28, 2026
+**Last Updated:** March 2026
 
-**Project Status:** Gold Tier Complete (12/12 requirements - 100%)
+**Project Status:** Platinum Tier In Progress (~85% Complete)

@@ -6,11 +6,15 @@ Part B: Advanced Workflows - Input Guardrails
 """
 
 import re
+import logging
 from datetime import datetime, timedelta
 from collections import defaultdict
 
 from agents import Agent, GuardrailFunctionOutput, input_guardrail
 from cloud.bots.models import GuardrailCheck, RiskLevel
+
+# Set up logging
+guardrail_logger = logging.getLogger("InputGuardrail")
 
 
 # ============================================================================
@@ -79,15 +83,19 @@ def _detect_prompt_injection(content: str) -> tuple[bool, str]:
         (r'ignore\s+(all\s+)?(previous\s+)?instructions', "Ignoring instructions"),
         (r'disregard\s+(all\s+)?(the\s+)?above', "Disregarding context"),
         (r'forget\s+(everything|all\s+previous)', "Forgetting context"),
-        (r'(system\s*)?(prompt|instructions?)\s*:', "Prompt manipulation"),
+        # More specific: only block "system: prompt:" or "prompt:" at start of line
+        (r'^\s*(system\s+)?prompt\s*:', "System prompt override"),
+        # Only block "instructions:" when followed by override attempts
+        (r'^\s*instructions\s*:\s*(ignore|disregard|override|forget)', "Instruction override"),
         (r'<\|.*?\|>', "Special token manipulation"),
-        (r'(jailbreak|roleplay|as\s+(an?\s+)?(ai|assistant|model))', "Jailbreak attempt"),
+        # Only block jailbreak when it's asking to bypass rules
+        (r'(jailbreak|bypass\s+rules|override\s+security)', "Jailbreak attempt"),
     ]
 
     content_lower = content.lower()
 
     for pattern, name in suspicious_patterns:
-        if re.search(pattern, content_lower):
+        if re.search(pattern, content_lower, re.MULTILINE):
             return True, f"Potential prompt injection detected: {name}"
 
     return False, ""
@@ -196,11 +204,15 @@ async def input_safety_check(context, agent, input_text: str) -> GuardrailFuncti
     Returns:
         GuardrailFunctionOutput: Whether to tripwire (block) the request
     """
+    # DEBUG: Log when guardrail is called
+    guardrail_logger.info(f"🔒 INPUT GUARDRAIL CALLED - Checking input ({len(input_text)} chars)")
+
     # Fast path: Do basic checks first (no AI needed)
 
     # 1. Validate task format
     is_valid, format_reason = _validate_task_format(input_text)
     if not is_valid:
+        guardrail_logger.warning(f"🚫 BLOCKED - Invalid format: {format_reason}")
         return GuardrailFunctionOutput(
             output_info=GuardrailCheck(
                 should_block=True,
@@ -213,6 +225,7 @@ async def input_safety_check(context, agent, input_text: str) -> GuardrailFuncti
     # 2. Check for prompt injection
     is_injection, injection_reason = _detect_prompt_injection(input_text)
     if is_injection:
+        guardrail_logger.warning(f"🚫 BLOCKED - Prompt injection: {injection_reason}")
         return GuardrailFunctionOutput(
             output_info=GuardrailCheck(
                 should_block=True,
@@ -225,6 +238,7 @@ async def input_safety_check(context, agent, input_text: str) -> GuardrailFuncti
     # 3. Check for spam
     is_spam, spam_reason = _detect_spam_patterns(input_text)
     if is_spam:
+        guardrail_logger.warning(f"🚫 BLOCKED - Spam: {spam_reason}")
         return GuardrailFunctionOutput(
             output_info=GuardrailCheck(
                 should_block=True,
@@ -238,6 +252,7 @@ async def input_safety_check(context, agent, input_text: str) -> GuardrailFuncti
     sender = _get_sender_from_task(input_text)
     should_rate_limit, rate_reason = _check_rate_limit(sender)
     if should_rate_limit:
+        guardrail_logger.warning(f"🚫 BLOCKED - Rate limit: {rate_reason}")
         return GuardrailFunctionOutput(
             output_info=GuardrailCheck(
                 should_block=True,
@@ -248,6 +263,7 @@ async def input_safety_check(context, agent, input_text: str) -> GuardrailFuncti
         )
 
     # Pass all checks - allow through
+    guardrail_logger.info(f"✅ PASSED - All checks clear")
     return GuardrailFunctionOutput(
         output_info=GuardrailCheck(
             should_block=False,
