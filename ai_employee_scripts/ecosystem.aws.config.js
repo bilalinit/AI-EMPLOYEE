@@ -19,6 +19,7 @@ module.exports = {
       min_uptime: '10s',
       restart_delay: 5000,
       env: {
+        PATH: '/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin',
         DEDUP_API_URL: 'http://localhost:5000',
         VAULT_PATH: '/home/ubuntu/ai-employee/AI_Employee_Vault'
       }
@@ -38,6 +39,7 @@ module.exports = {
       min_uptime: '10s',
       restart_delay: 5000,
       env: {
+        PATH: '/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin',
         DEDUP_API_URL: 'http://localhost:5000',
         VAULT_PATH: '/home/ubuntu/ai-employee/AI_Employee_Vault',
         AGENT_TYPE: 'cloud',
