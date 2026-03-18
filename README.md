@@ -2,7 +2,7 @@
 
 **A fully autonomous AI employee that monitors your digital life and handles business operations automatically.**
 
-Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (~85% Complete)
+Built for the **Personal AI Employee Hackathon 0** - Platinum Tier Complete
 
 ---
 
@@ -14,33 +14,33 @@ Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (
 ███████████████████████████████████████████  BRONZE  ███████████████████████████████████████████
 ███████████████████████████████████████████  SILVER  ███████████████████████████████████████████
 ███████████████████████████████████████████   GOLD   ███████████████████████████████████████████
-██████████████████████████████████████░░░░ PLATINUM ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+███████████████████████████████████████████ PLATINUM ███████████████████████████████████████████
 ```
 
-| Tier | Status | Requirements | Completion Date |
-|------|--------|--------------|-----------------|
-| **Bronze** | ✅ Complete | 4/4 | February 15, 2026 |
-| **Silver** | ✅ Complete | 4/4 | February 21, 2026 |
-| **Gold** | ✅ Complete | 12/12 | February 26, 2026 |
-| **Platinum** | 🔄 In Progress | ~85% | March 2026 |
+| Tier | Status | Completion Date |
+|------|--------|-----------------|
+| **Bronze** | Complete | February 15, 2026 |
+| **Silver** | Complete | February 21, 2026 |
+| **Gold** | Complete | February 26, 2026 |
+| **Platinum** | Complete | March 18, 2026 |
 
-### Overall Progress: **3.85 of 4 Tiers Complete**
+### Overall Progress: **4 of 4 Tiers Complete**
 
-#### Bronze Tier ✅
+#### Bronze Tier
 - FileSystemWatcher with drop folder monitoring
-- Task processing pipeline (Inbox → Needs_Action → Plans → Done)
+- Task processing pipeline (Inbox -> Needs_Action -> Plans -> Done)
 - 4 core agent skills
 - Obsidian vault with Company Handbook
 - Human approval workflow
 
-#### Silver Tier ✅
+#### Silver Tier
 - GmailWatcher for email monitoring
 - MCP servers for Gmail and LinkedIn
 - LinkedIn posting automation
 - Email categorization and processing
 - Integration with Claude Code
 
-#### Gold Tier ✅
+#### Gold Tier
 - Full cross-domain integration (Personal + Business)
 - **6 MCP Servers** (Gmail, LinkedIn API, LinkedIn Playwright, Meta, Twitter, Odoo)
 - Odoo Accounting (self-hosted Docker, local MCP)
@@ -49,20 +49,18 @@ Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (
 - Weekly CEO Briefing with automatic email delivery
 - 3-layer error recovery (watchdog, retry, circuit breaker, DLQ)
 - Comprehensive audit logging
-- Ralph Wiggum stop hook
 - **12 Agent Skills** for complete automation
 
-#### Platinum Tier 🔄 (~85% Complete)
-- ✅ Cloud Orchestrator with task monitoring
-- ✅ Triage Agent with SDK handoffs to specialists
-- ✅ Email, Social, Finance agents
-- ✅ Input/Output guardrails
-- ✅ Odoo MCP server integration (all 5 tools tested)
-- ✅ Per-request MCP lifecycle
-- ✅ PM2 Process Manager (24/7 operation)
-- ✅ Vault Git Sync (Cloud ↔ Local via GitHub)
-- ⬜ Cloud deployment (Oracle VM setup)
-- ⬜ Work-zone specialization (Cloud drafts, Local approves)
+#### Platinum Tier
+- **AWS Cloud Deployment** (24/7 operation on EC2 t3.small)
+- **Cloud Orchestrator** using OpenAI Agents SDK with GLM model
+- **Work-Zone Specialization** (Cloud drafts, Local approves)
+- **TriageAgent** with automatic SDK handoffs to specialists
+- **EmailAgent, SocialAgent, FinanceAgent** for specialized processing
+- Input/Output guardrails for security
+- Git-based vault sync (Cloud <-> Local via GitHub)
+- PM2 process management with auto-restart
+- Deduplication API for local/cloud coordination
 
 ---
 
@@ -73,15 +71,13 @@ Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (
 - [Cloud Agent Architecture](#cloud-agent-architecture-platinum-tier)
 - [Features](#features)
 - [Quick Start](#quick-start)
-- [Installation](#installation)
+- [AWS Cloud Deployment](#aws-cloud-deployment)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [PM2 Process Management](#pm2-process-management)
 - [Components](#components)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
 - [Documentation](#documentation)
-- [License](#license)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -89,9 +85,9 @@ Built for the **Personal AI Employee Hackathon 0** - Platinum Tier In Progress (
 
 The Personal AI Employee is a 24/7 autonomous system that perceives, reasons about, and acts on your personal and business tasks. It combines:
 
-- **Perception:** Watchers monitor Gmail, LinkedIn, Facebook/Instagram, Twitter/X, and local files
-- **Reasoning:** Claude Code (Claude 4.6) processes tasks and creates execution plans
-- **Action:** MCP servers execute actions (post content, send emails, create invoices, etc.)
+- **Perception:** Watchers monitor Gmail, LinkedIn, and local files
+- **Reasoning:** Cloud agents (GLM) or Claude Code process tasks and create drafts
+- **Action:** MCP servers execute actions (post content, send emails, create invoices)
 - **Memory:** Obsidian vault stores all data, tasks, plans, and logs
 - **Safety:** Human-in-the-loop approval for sensitive actions
 
@@ -99,149 +95,132 @@ The Personal AI Employee is a 24/7 autonomous system that perceives, reasons abo
 
 | Category | Capability |
 |----------|------------|
-| **Email** | Monitors Gmail, categorizes messages, drafts replies |
+| **Email** | Monitors Gmail, categorizes messages, drafts replies automatically |
 | **Social Media** | Generates and posts content to LinkedIn, Facebook, Instagram, Twitter/X |
 | **Accounting** | Creates invoices in Odoo, tracks revenue and expenses |
 | **Files** | Monitors drop folder for new files and tasks |
 | **Reporting** | Generates weekly CEO briefings with financial and activity summaries |
-| **Cloud (Platinum)** | 24/7 cloud operation with local approval workflow |
+| **Cloud** | 24/7 AWS operation with automatic email processing and draft generation |
 
 ---
 
 ## Architecture
 
-### System Workflow
+### System Workflow (Platinum Tier)
 
 ```
-                    ╔═════════════════════════════════════════════╗
-                    ║            ENTRY POINTS                    ║
-                    ╠═════════════════════════════════════════════╣
-                    ║  1. Cron Jobs (Scheduled Automation)       ║
-                    ║  2. Claude Code Skills (Interactive)       ║
-                    ║  3. Watchdog.py (Production Monitoring)    ║
-                    ║  4. Cloud Orchestrator (Platinum Tier)     ║
-                    ╚═════════════════════════════════════════════╝
-                                     │
-                    ┌────────────────┴────────────────┐
-                    ▼                                 ▼
-        ╔═══════════════════════╗         ╔═══════════════════════╗
-        ║    Cron Triggers      ║         ║     Watchdog.py       ║
-        ║  (linkedin/meta/      ║         ║  Monitors & Restarts  ║
-        ║   twitter/weekly)     ║         ║   Orchestrator.py     ║
-        ╚════════════╤═══════════╝         ╚════════════╤═════════╝
-                     │                                 │
-                     │    ┌────────────────────────────┘
-                     │    │
-                     ▼    ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Orchestrator.py                           │
-│              (Master Controller - 24/7 Process)              │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Needs_Action │◄─┤  Watchers    │  │   Approved   │      │
-│  │   Folder     │  │  (Perception)│  │   Folder     │      │
-│  └───────┬──────┘  └──────────────┘  └───────┬──────┘      │
-│          │                                  │              │
-└──────────┼──────────────────────────────────┼──────────────┘
-           │                                  │
-           │     ┌────────────┐               │
-           └────►│ Claude Code│◄──────────────┘
-                 │ (Reasoning)│
-                 └─────┬──────┘
-                       │
-        ┌──────────────┼──────────────┐
-        ▼              ▼              ▼
-┌──────────────┐ ┌──────────┐ ┌──────────────┐
-│ Pending_     │ │  Plans   │ │   Rejected   │
-│  Approval    │ │          │ │              │
-└──────┬───────┘ └──────────┘ └──────────────┘
-       │
-   ┌───┴───┐
-   ▼       ▼
-┌──────┐ ┌──────┐
-│Human │ │Auto- │
-│Review│ │skip │
-└───┬──┘ └──┬───┘
-    │       │
-    ▼       │
-┌─────────┐ │
-│ Approved│◄┘
-└────┬────┘
-     │
-     ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    MCP Servers (Action)                     │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
-│  │  Gmail  │ │LinkedIn │ │  Meta   │ │ Twitter │           │
-│  │   MCP   │ │   MCP   │ │   MCP   │ │   MCP   │           │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
-│  ┌─────────┐                                               │
-│  │  Odoo   │                                               │
-│  │   MCP   │                                               │
-│  └────┬────┘                                               │
-└───────┼────────────────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────┐
-│     Done     │
-│   Folder     │
-└──────────────┘
-
-═══════════════════════════════════════════════════════════════
-                    SCHEDULED AUTOMATION (CRON)
-═══════════════════════════════════════════════════════════════
-  2 AM → LinkedIn Post    3 AM → Meta (FB/IG)    4 AM → Twitter
-                          │
-                          ▼
-                 Sunday 5 AM → CEO Briefing → Email to You
+                         AWS CLOUD (16.16.91.158)
++-------------------------------------------------------------------------+
+|                                                                         |
+|  PM2 Services:                                                          |
+|  +-------------------------+    +------------------------------------+  |
+|  | ai-employee-dedup-api  |    |     ai-employee-cloud              |  |
+|  |   Port 5000            |    |                                    |  |
+|  |   Coordinates          |    |  +------------------------------+ |  |
+|  |   local/cloud          |    |  |   Cloud Orchestrator         | |  |
+|  +-------------------------+    |  |   (OpenAI Agents SDK + GLM)  | |  |
+|                                 |  +------------------------------+ |  |
+|                                 |              |                     |  |
+|                                 |  +-----------v------------------+ |  |
+|                                 |  |   Cloud Watchers             | |  |
+|                                 |  |   - Gmail (2 min poll)       | |  |
+|                                 |  |   - LinkedIn (5 min poll)    | |  |
+|                                 |  +------------------------------+ |  |
+|                                 |              |                     |  |
+|                                 |  +-----------v------------------+ |  |
+|                                 |  |   Specialist Agents          | |  |
+|                                 |  |   - EmailAgent               | |  |
+|                                 |  |   - SocialAgent              | |  |
+|                                 |  |   - FinanceAgent             | |  |
+|                                 |  +------------------------------+ |  |
+|                                 +------------------------------------+  |
+|                                                                         |
+|  Cron: git pull && git add && git commit && git push (every 5 min)     |
++-------------------------------------------------------------------------+
+                                    |
+                                    | Git Sync
+                                    v
++-------------------------------------------------------------------------+
+|                           LOCAL (Your PC)                               |
+|                                                                         |
+|  Cron Jobs:                                                             |
+|  - Vault sync (every 5 min)                                            |
+|  - LinkedIn post (2 AM daily)                                          |
+|  - Meta post (3 AM daily)                                              |
+|  - Twitter post (4 AM daily)                                           |
+|  - CEO Briefing (5 AM Sunday)                                          |
+|                                                                         |
+|  Services:                                                              |
+|  - Odoo Accounting (Docker)                                             |
+|  - Claude Code (Human Review)                                          |
+|  - Final Action Execution                                               |
++-------------------------------------------------------------------------+
 ```
+
+### Work-Zone Specialization
+
+| Zone | Owns | Why |
+|------|------|-----|
+| **Cloud** | Email monitoring, Draft generation, Social content drafts | 24/7 operation |
+| **Local** | Approvals, Payments, Odoo, Final send/post | Human-in-the-loop, Security |
 
 ---
 
 ## Cloud Agent Architecture (Platinum Tier)
 
-### Work-Zone Specialization
-
-The Platinum tier introduces **Cloud + Local** work zones:
+### Agent Handoff Flow
 
 ```
-┌─────────────────────────────────┐    ┌─────────────────────────────┐
-│         CLOUD ZONE              │    │        LOCAL ZONE           │
-│   (Oracle VM / AWS / GCP)       │    │   (WSL / Development PC)    │
-├─────────────────────────────────┤    ├─────────────────────────────┤
-│                                 │    │                             │
-│  ┌─────────────────────────┐    │    │    ┌─────────────────┐      │
-│  │     PM2 Process         │    │    │    │  PM2 Process    │      │
-│  │  ai-employee-cloud      │    │    │    │ ai-employee-local│     │
-│  └───────────┬─────────────┘    │    │    └────────┬────────┘      │
-│              │                   │    │             │               │
-│  ┌───────────▼─────────────┐    │    │    ┌────────▼────────┐      │
-│  │  Cloud Orchestrator     │    │    │    │   Orchestrator  │      │
-│  │  (cloud_orchestrator.py)│    │    │    │  (orchestrator.py)│     │
-│  └───────────┬─────────────┘    │    │    └────────┬────────┘      │
-│              │                   │    │             │               │
-│  ┌───────────▼─────────────┐    │    │    ┌────────▼────────┐      │
-│  │  Cloud Agents           │    │    │    │  Claude Code    │      │
-│  │  - TriageAgent          │    │    │    │  (Human Review) │      │
-│  │  - EmailAgent           │────┼────┼───▶│                 │      │
-│  │  - SocialAgent          │    │    │    │  /process-tasks │      │
-│  │  - FinanceAgent         │    │    │    │  /execute-approved│    │
-│  └───────────┬─────────────┘    │    │    └─────────────────┘      │
-│              │                   │    │                             │
-│  ┌───────────▼─────────────┐    │    │                             │
-│  │  Pending_Approval/      │    │    │                             │
-│  │  (Drafts from cloud)    │────┼───▶│  Human reviews & approves   │
-│  └─────────────────────────┘    │    │                             │
-│                                 │    │                             │
-│  ┌─────────────────────────┐    │    │                             │
-│  │   vault_sync.py         │◄───┼───▶│  vault_sync.py              │
-│  │   (Git-based sync)      │    │    │  (Git-based sync)           │
-│  └─────────────────────────┘    │    │                             │
-│                                 │    │                             │
-└─────────────────────────────────┘    └─────────────────────────────┘
-                  │                                    │
-                  └──────────── GitHub ────────────────┘
-                        (platinum-tier branch)
+Email arrives in Gmail
+         |
+         v
++------------------+
+| Gmail Watcher    |  (Cloud, 2 min poll)
+| Creates task in  |
+| Needs_Action/    |
++--------+---------+
+         |
+         v
++------------------+
+| Cloud            |
+| Orchestrator     |  (Checks every 4 min)
+| Reads task       |
++--------+---------+
+         |
+         v
++------------------+
+| TriageAgent      |  (GLM Model)
+| Routes to        |
+| specialist       |
++--------+---------+
+         |
+    +----+----+
+    |    |    |
+    v    v    v
++------+ +------+ +----------+
+|Email | |Social| | Finance  |
+|Agent | |Agent | |  Agent   |
++------+ +------+ +----------+
+    |       |         |
+    +-------+---------+
+            |
+            v
++------------------+
+| Pending_Approval/|  (Draft created)
+| Human reviews    |
++------------------+
+            |
+            v
+       Git Push
+            |
+            v
+      Local Pulls
+            |
+            v
+    Human Approves
+            |
+            v
+      Final Action
 ```
 
 ### Cloud Agent Components
@@ -252,74 +231,47 @@ The Platinum tier introduces **Cloud + Local** work zones:
 | **EmailAgent** | `cloud/bots/email_agent.py` | Drafts email responses |
 | **SocialAgent** | `cloud/bots/social_agent.py` | Creates social content |
 | **FinanceAgent** | `cloud/bots/finance_agent.py` | Odoo operations, invoices |
-| **InputGuardrails** | `cloud/guardrails/input_guardrails.py` | Blocks prompt injection |
+| **InputGuardrails** | `cloud/guardrails/input_guardrails.py` | Blocks prompt injection, spam |
 | **OutputGuardrails** | `cloud/guardrails/output_guardrails.py` | Filters sensitive output |
-
-### Agent Handoff Flow
-
-```
-Task arrives in Needs_Action/
-              │
-              ▼
-    ┌─────────────────┐
-    │  TriageAgent    │
-    │  (Task Router)  │
-    └────────┬────────┘
-             │
-    ┌────────┼────────┐
-    │        │        │
-    ▼        ▼        ▼
-┌───────┐ ┌───────┐ ┌───────────┐
-│ Email │ │Social │ │  Finance  │
-│ Agent │ │ Agent │ │   Agent   │
-└───┬───┘ └───┬───┘ └─────┬─────┘
-    │         │           │
-    └─────────┴───────────┘
-              │
-              ▼
-    Pending_Approval/ (Human reviews)
-```
+| **Dedup API** | `cloud/api_server.py` | Coordinates local/cloud processing |
 
 ---
 
 ## Features
 
-### All Tiers
+### Complete Feature List
 
-#### Bronze Tier ✅
-- FileSystemWatcher for drop folder monitoring
-- Task processing pipeline (Needs_Action → Plans → Done)
-- 4 core agent skills
-- Obsidian vault for memory and dashboard
-- Company handbook with approval rules
+#### Email Automation
+- Automatic email monitoring (Gmail API)
+- Smart categorization and priority detection
+- Automatic draft replies generated by cloud agents
+- Human approval before sending
 
-#### Silver Tier ✅
-- GmailWatcher for email monitoring
-- MCP servers for Gmail and LinkedIn
-- LinkedIn posting skill
-- Email processing and categorization
-- Human approval workflow
-
-#### Gold Tier ✅
-- Full cross-domain integration (Personal + Business)
-- Odoo Accounting (self-hosted, local, MCP)
-- Facebook/Instagram posting via Meta Graph API
+#### Social Media
+- LinkedIn posting (API and Playwright)
+- Facebook Page posting
+- Instagram Business posting
 - Twitter/X posting
-- 6 MCP servers
-- Weekly CEO Briefing with automatic email delivery
-- 3-layer error recovery
-- Comprehensive audit logging
-- Ralph Wiggum stop hook
-- 12 Agent Skills
+- Content queue with scheduled posting
 
-#### Platinum Tier 🔄
-- Cloud Orchestrator for 24/7 operation
-- Specialist agents (Email, Social, Finance)
-- SDK automatic handoffs
-- Input/Output guardrails
-- PM2 process management
-- Vault Git sync (Cloud ↔ Local)
-- Work-zone specialization
+#### Accounting (Odoo)
+- Draft invoice creation
+- Payment tracking
+- Revenue and expense reports
+- Weekly CEO briefing generation
+
+#### Cloud Operation (Platinum)
+- 24/7 AWS EC2 deployment
+- Automatic email processing
+- Draft generation without human intervention
+- Git-based sync between cloud and local
+
+#### Safety & Security
+- Human-in-the-loop approval
+- Input guardrails (prompt injection detection)
+- Output guardrails (sensitive data filtering)
+- Rate limiting per sender
+- Audit logging
 
 ---
 
@@ -331,12 +283,13 @@ Task arrives in Needs_Action/
 - **Docker & Docker Compose** (for Odoo)
 - **Claude Code CLI** (with Claude 4.6)
 - **PM2** (for 24/7 process management)
-- API credentials for: LinkedIn, Meta, Twitter, Gmail
+- API credentials for: LinkedIn, Meta, Twitter, Gmail, GLM
 
 ### 1. Clone and Install
 
 ```bash
-cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts"
+git clone https://github.com/bilalinit/AI-EMPLOYEE.git
+cd AI-EMPLOYEE/ai_employee_scripts
 
 # Install dependencies via UV
 uv sync
@@ -355,13 +308,46 @@ cp .env.example .env
 nano .env
 ```
 
+Required environment variables:
+```env
+# GLM API (for cloud agents)
+GLM_API_KEY=your_glm_api_key
+MODEL_NAME=glm-4.7
+GLM_BASE_URL=https://api.z.ai/api/paas/v4/
+
+# Gmail OAuth
+GOOGLE_CREDENTIALS={"installed":{"client_id":"..."}}
+
+# LinkedIn
+LINKEDIN_ACCESS_TOKEN=your_token
+LINKEDIN_CLIENT_ID=your_id
+LINKEDIN_CLIENT_SECRET=your_secret
+
+# Twitter/X
+X_API_KEY=your_key
+X_API_SECRET=your_secret
+X_ACCESS_TOKEN=your_token
+X_ACCESS_TOKEN_SECRET=your_secret
+
+# Meta (Facebook/Instagram)
+META_ACCESS_TOKEN=your_token
+META_PAGE_ID=your_page_id
+
+# Odoo
+ODOO_URL=http://localhost:8069
+ODOO_DB=odoo
+ODOO_USER=your_email
+ODOO_PASSWORD=your_password
+```
+
 ### 3. Start Odoo (Accounting)
 
 ```bash
-cd "/mnt/d/coding Q4/hackathon-0/save-1"
+cd ..
 docker-compose up -d
 
 # Access Odoo at http://localhost:8069
+# Create database, install Invoicing app
 ```
 
 ### 4. Start the AI Employee
@@ -375,21 +361,11 @@ uv run python orchestrator.py ../AI_Employee_Vault
 #### PM2 Mode (24/7 Operation)
 ```bash
 cd ai_employee_scripts
-
-# Start local services
-./start_pm2.sh local
-
-# View logs
-pm2 logs ai-employee-local
+pm2 start ecosystem.local.config.js
+pm2 save
 ```
 
-#### Cloud Mode (Platinum)
-```bash
-# On cloud VM
-./start_pm2.sh cloud
-```
-
-### 5. Setup Cron Jobs (Automated Posting)
+### 5. Setup Cron Jobs
 
 ```bash
 crontab -e
@@ -397,103 +373,139 @@ crontab -e
 
 Add:
 ```bash
+PATH=/home/YOUR_USER/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+# Vault sync every 5 minutes
+*/5 * * * * cd "/path/to/AI-EMPLOYEE" && git pull --rebase && git add -A && git diff --cached --quiet || git commit -m "Local sync" && git push
+
 # LinkedIn post daily at 2 AM
-0 2 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/linkedin_cron_trigger.py >> ../AI_Employee_Vault/Logs/cron.log 2>&1
+0 2 * * * cd "/path/to/AI-EMPLOYEE/ai_employee_scripts" && uv run python scripts/linkedin_cron_trigger.py
 
 # Meta post daily at 3 AM
-0 3 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/meta_cron_trigger.py >> ../AI_Employee_Vault/Logs/meta_cron.log 2>&1
+0 3 * * * cd "/path/to/AI-EMPLOYEE/ai_employee_scripts" && uv run python scripts/meta_cron_trigger.py
 
 # Twitter post daily at 4 AM
-0 4 * * * cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/twitter_cron_trigger.py >> ../AI_Employee_Vault/Logs/twitter_cron.log 2>&1
+0 4 * * * cd "/path/to/AI-EMPLOYEE/ai_employee_scripts" && uv run python scripts/twitter_cron_trigger.py
 
 # Weekly CEO Briefing Sunday at 5 AM
-0 5 * * 0 cd "/mnt/d/coding Q4/hackathon-0/save-1/ai_employee_scripts" && uv run python scripts/weekly_cron_trigger.py >> ../AI_Employee_Vault/Logs/weekly_cron.log 2>&1
-
-# Vault sync every 5 minutes (Platinum)
-*/5 * * * * cd "/mnt/d/coding Q4/hackathon-0/save-1" && uv run python ai_employee_scripts/vault_sync.py >> AI_Employee_Vault/Logs/vault_sync.log 2>&1
+0 5 * * 0 cd "/path/to/AI-EMPLOYEE/ai_employee_scripts" && uv run python scripts/weekly_cron_trigger.py
 ```
 
 ---
 
-## Installation
+## AWS Cloud Deployment
 
-### Step-by-Step Setup
+### Instance Details
 
-#### 1. LinkedIn OAuth Setup
+| Setting | Value |
+|---------|-------|
+| **Instance Type** | t3.small (2 vCPU, 2 GB RAM) |
+| **OS** | Ubuntu Server 24.04 LTS |
+| **Public IP** | 16.16.91.158 |
+| **Open Ports** | 22 (SSH), 80, 443, 5000 (API) |
+| **Cost** | ~$15/month (fits in $50 credit for 3 months) |
+
+### Deployed Services
+
+| Service | Status | URL |
+|---------|--------|-----|
+| **Dedup API** | Online | http://16.16.91.158:5000/health |
+| **Cloud Orchestrator** | Online | - |
+| **Gmail Watcher** | Online | Polls every 2 min |
+| **LinkedIn Watcher** | Online | Polls every 5 min |
+
+### AWS Deployment Steps
+
+1. **Create EC2 Instance** (t3.small, Ubuntu 24.04)
+2. **Save SSH Key** to `~/.ssh/ai-employee-key-aws.pem`
+3. **Connect and Install Dependencies:**
+   ```bash
+   ssh -i ~/.ssh/ai-employee-key-aws.pem ubuntu@YOUR_IP
+   sudo apt update && sudo apt install -y python3 nodejs npm git
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   sudo npm install -g pm2
+   ```
+4. **Clone Repository:**
+   ```bash
+   git clone https://github.com/bilalinit/AI-EMPLOYEE.git ai-employee
+   cd ai-employee/ai_employee_scripts
+   uv sync
+   uv run playwright install chromium
+   ```
+5. **Configure .env** (copy from local)
+6. **Copy Gmail OAuth Token** from local:
+   ```bash
+   scp -i ~/.ssh/ai-employee-key-aws.pem \
+     sessions/token_cloud_gmail_watcher.json \
+     ubuntu@YOUR_IP:~/ai-employee/ai_employee_scripts/sessions/
+   ```
+7. **Start PM2:**
+   ```bash
+   pm2 start ecosystem.aws.config.js
+   pm2 save
+   pm2 startup systemd
+   ```
+8. **Set up Cron:**
+   ```bash
+   */5 * * * * cd /home/ubuntu/ai-employee && git pull && git add -A && git diff --cached --quiet || git commit -m "Cloud sync" && git push
+   ```
+
+### Cloud SSH Access
 
 ```bash
-python get_token.py
-# Follow prompts, add token to .env
+ssh -i ~/.ssh/ai-employee-key-aws.pem ubuntu@16.16.91.158
 ```
 
-#### 2. Gmail OAuth Setup
-
-Get credentials from: https://console.cloud.google.com/
-Place `credentials.json` in `ai_employee_scripts/`
-
-#### 3. Meta (Facebook/Instagram) Setup
-
-1. Create Meta Developer Account
-2. Create Facebook Page
-3. Generate Page Access Token
-4. Add to `.env`
-
-#### 4. Twitter/X Setup
-
-1. Create Twitter Developer Account
-2. Generate API keys
-3. Add to `.env`
-
-#### 5. Odoo Setup
+### Cloud Management Commands
 
 ```bash
-docker-compose up -d
-# Access http://localhost:8069
-# Create database, install Invoicing
+# Check status
+pm2 status
+
+# View logs
+pm2 logs ai-employee-cloud
+
+# Restart services
+pm2 restart all
+
+# Check API health
+curl http://localhost:5000/health
 ```
 
 ---
 
 ## Configuration
 
-### MCP Server Configuration
-
-Located in `AI_Employee_Vault/.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "ai-gmail": { ... },
-    "linkedin-api": { ... },
-    "linkedin-mcp": { ... },
-    "twitter-api": { ... },
-    "odoo": { ... },
-    "meta": { ... }
-  }
-}
-```
-
 ### Vault Structure
 
 ```
 AI_Employee_Vault/
-├── Inbox/              # Dropped files stored here
-├── Needs_Action/       # Tasks awaiting processing
-├── Plans/              # Execution plans
-├── Pending_Approval/   # Awaiting human review
-├── Approved/           # Human-approved actions
-├── Rejected/           # Human-rejected actions
-├── Done/               # Completed tasks/summaries
-├── Failed/             # Failed items (dead letter queue)
-├── In_Progress/        # Work-in-progress (Platinum)
-├── Logs/               # System logs
-├── Accounting/         # Financial records
-├── Briefings/          # CEO briefings
-├── Content_To_Post/    # Queued social media content
-├── Company_Handbook.md # Rules and approval thresholds
-├── Dashboard.md        # System status overview
-└── Business_Goals.md   # Business objectives
++-- Inbox/              # Incoming emails and files
++-- Needs_Action/       # Tasks awaiting processing
++-- In_Progress/        # Tasks being worked on
+|   +-- cloud/          # Cloud agent tasks
+|   +-- local/          # Local tasks
++-- Pending_Approval/   # Drafts awaiting human review
++-- Approved/           # Human-approved actions
++-- Rejected/           # Human-rejected actions
++-- Done/               # Completed tasks
++-- Logs/               # System logs
++-- Accounting/         # Financial records
++-- Content_To_Post/    # Social media queue
+|   +-- queued/         # Pending posts
+|   +-- posted/         # Published posts
++-- Company_Handbook.md # Rules and approval thresholds
++-- Dashboard.md        # System status
++-- Business_Goals.md   # Business objectives
 ```
+
+### Approval Rules (Company_Handbook.md)
+
+| Category | Actions |
+|----------|---------|
+| **Auto-Approve** | Reading, drafting, file organization, logging |
+| **Requires Approval** | Emails to new contacts, payments >$50, social posts |
+| **Never Allowed** | Payments without approval, sharing credentials, legal advice |
 
 ---
 
@@ -508,68 +520,81 @@ AI_Employee_Vault/
 | `/process-tasks` | Process all pending tasks in Needs_Action |
 | `/create-plan` | Create structured execution plan for a task |
 | `/complete-task` | Mark task as completed and move to Done |
-| `/execute-approved` | Execute approved LinkedIn/Meta/Twitter posts, Odoo invoices, emails |
+| `/execute-approved` | Execute approved posts, invoices, emails |
 | `/linkedin-posting` | Generate lead-generating LinkedIn post ideas |
-| `/meta-posting` | Generate Facebook/Instagram posts for business |
-| `/twitter-posting` | Generate engaging tweets for business growth |
-| `/create-invoice` | Create draft invoice in Odoo accounting |
-| `/check-accounting` | Query Odoo for invoices, payments, revenue, expenses |
-| `/weekly-audit` | Generate CEO Briefing with Odoo financial data |
+| `/meta-posting` | Generate Facebook/Instagram posts |
+| `/twitter-posting` | Generate engaging tweets |
+| `/create-invoice` | Create draft invoice in Odoo |
+| `/check-accounting` | Query Odoo financial data |
+| `/weekly-audit` | Generate CEO Briefing |
+
+### Workflow Example
+
+1. **Email arrives** -> Gmail Watcher creates task
+2. **Cloud processes** -> TriageAgent routes to EmailAgent
+3. **Draft created** -> Saved in `Pending_Approval/`
+4. **Git sync** -> Draft appears locally
+5. **Human reviews** -> Edits/approves in Obsidian
+6. **Move to Approved/** -> Marked for execution
+7. **Git sync** -> Cloud sees approval
+8. **Email sent** -> via Gmail MCP
 
 ---
 
 ## PM2 Process Management
 
-### Configuration Files
-
-| File | Environment |
-|------|-------------|
-| `ecosystem.local.config.js` | Local (WSL) |
-| `ecosystem.cloud.config.js` | Cloud (Oracle VM) |
-
-### Commands
+### Local Environment
 
 ```bash
-# Start services
-./start_pm2.sh local    # Local environment
-./start_pm2.sh cloud    # Cloud environment
+cd ai_employee_scripts
+pm2 start ecosystem.local.config.js
+pm2 save
+```
 
-# View status
-pm2 list
-pm2 logs ai-employee-local
+### Cloud Environment
 
-# Stop services
-./stop_pm2.sh local
-
-# Auto-start on boot
+```bash
+pm2 start ecosystem.aws.config.js
 pm2 save
 pm2 startup systemd
+```
+
+### Useful Commands
+
+```bash
+pm2 status              # Check all processes
+pm2 logs                # View all logs
+pm2 logs ai-employee-cloud  # View specific logs
+pm2 restart all         # Restart everything
+pm2 restart --update-env    # Restart with new env
+pm2 stop all            # Stop all
+pm2 save                # Save current state
 ```
 
 ---
 
 ## Components
 
-### Watchers (3 Total)
+### Watchers
 
-| Watcher | Purpose | File |
-|---------|---------|------|
-| **FileSystemWatcher** | Monitors `drop_folder/` for new files | `watchers/filesystem_watcher.py` |
-| **GmailWatcher** | Monitors Gmail for new emails (2min poll) | `watchers/gmail_watcher.py` |
-| **LinkedInWatcher** | Monitors LinkedIn for unread messages (5min poll) | `watchers/linkedin_watcher.py` |
+| Watcher | Location | Purpose | Interval |
+|---------|----------|---------|----------|
+| **FileSystemWatcher** | Local | Monitors drop_folder/ | Event-based |
+| **GmailWatcher** | Local/Cloud | Monitors Gmail | 2 min |
+| **LinkedInWatcher** | Local/Cloud | Monitors LinkedIn | 5 min |
 
-### MCP Servers (6 Total)
+### MCP Servers
 
-| MCP Server | Tools Provided | Purpose |
-|------------|----------------|---------|
-| **gmail_mcp.py** | send_email, read_email, search_emails | Gmail operations |
-| **linkedin_api_mcp.py** | post_to_linkedin | LinkedIn posting via API |
-| **linkedin_mcp.py** | post_content, reply_message | LinkedIn via Playwright |
-| **meta_mcp.py** | post_to_facebook, post_to_instagram | FB/IG posting |
-| **twitter_mcp.py** | post_tweet | Twitter/X posting |
-| **odoo_mcp.py** | create_draft_invoice, get_revenue | Odoo Accounting |
+| MCP Server | Purpose |
+|------------|---------|
+| **Gmail MCP** | Send, read, search emails |
+| **LinkedIn API MCP** | Post via REST API |
+| **LinkedIn Playwright MCP** | Browser automation |
+| **Meta MCP** | Facebook/Instagram posting |
+| **Twitter MCP** | Twitter/X posting |
+| **Odoo MCP** | Invoice and accounting operations |
 
-### Cloud Agents (4 Total - Platinum)
+### Cloud Agents
 
 | Agent | Purpose |
 |-------|---------|
@@ -578,63 +603,13 @@ pm2 startup systemd
 | **SocialAgent** | Creates social content |
 | **FinanceAgent** | Odoo operations |
 
-### Error Recovery (3 Layers)
+### Error Recovery
 
 | Layer | Component | Purpose |
 |-------|-----------|---------|
 | 1 | watchdog.py | Monitors orchestrator, auto-restart |
 | 2 | orchestrator.py | Restarts crashed watchers |
 | 3 | error_recovery.py | Retry, circuit breaker, DLQ |
-
----
-
-## Development
-
-### Project Structure
-
-```
-/mnt/d/coding Q4/hackathon-0/save-1/
-├── AI_Employee_Vault/         # Obsidian vault (data/memory)
-├── ai_employee_scripts/       # Python code
-│   ├── watchers/              # Watcher scripts
-│   ├── mcp_servers/           # MCP server implementations
-│   ├── scripts/               # Cron trigger scripts
-│   ├── cloud/                 # Cloud agent architecture (Platinum)
-│   │   ├── bots/              # Agent implementations
-│   │   ├── guardrails/        # Input/output guardrails
-│   │   ├── tools/             # File and git tools
-│   │   └── mcp_servers/       # Cloud MCP servers
-│   ├── cloud_watchers/        # Cloud-specific watchers
-│   ├── orchestrator.py        # Local master controller
-│   ├── cloud_orchestrator.py  # Cloud master controller
-│   ├── watchdog.py            # External watchdog
-│   ├── vault_sync.py          # Git-based vault sync
-│   ├── error_recovery.py      # Error handling utilities
-│   └── .env                   # API credentials
-├── drop_folder/               # External input staging
-├── .claude/                   # Claude Code configuration
-│   └── skills/                # Agent skill definitions (12)
-├── documentation/             # Project documentation
-├── docker-compose.yml         # Odoo + PostgreSQL
-└── README.md                  # This file
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| **Watchdog says "already running"** | `rm /tmp/ai_employee_orchestrator.pid` |
-| **Gmail auth fails** | `rm token_gmail.json`, re-auth |
-| **Odoo connection refused** | `docker-compose up -d` |
-| **LinkedIn 401** | Run `python get_token.py`, update .env |
-| **Twitter 402** | Check X API credits |
-| **Ralph Wiggum blocking** | `touch AI_Employee_Vault/stop_ralph` |
-| **Circuit breaker open** | Wait 60s or `rm Logs/circuit_breakers.json` |
-| **PM2 won't start** | Check paths in ecosystem.*.config.js |
 
 ---
 
@@ -651,8 +626,30 @@ Full documentation available in `documentation/`:
 | [vault-structure.md](documentation/vault-structure.md) | Vault organization |
 | [configuration-reference.md](documentation/configuration-reference.md) | Config files |
 | [security-credentials.md](documentation/security-credentials.md) | Credential setup |
-| [error-recovery-reference.md](documentation/error-recovery-reference.md) | Error handling |
-| [cron-jobs-reference.md](documentation/cron-jobs-reference.md) | Scheduled tasks |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| **Watchdog says "already running"** | `rm /tmp/ai_employee_orchestrator.pid` |
+| **Gmail auth fails** | Delete token file, re-authenticate |
+| **Odoo connection refused** | `docker-compose up -d` |
+| **LinkedIn 401** | Refresh access token |
+| **Cloud can't find 'uv'** | Check PATH in ecosystem.aws.config.js |
+| **Drafts not appearing locally** | Check git sync cron is running |
+| **PM2 won't start** | Verify paths in ecosystem config |
+
+### Cloud-Specific Issues
+
+| Issue | Solution |
+|-------|----------|
+| **Can't access port 5000** | Add to AWS Security Group inbound rules |
+| **Gmail watcher crash** | Copy OAuth token from local machine |
+| **Git push fails** | Set up SSH key for GitHub on cloud |
 
 ---
 
@@ -660,13 +657,14 @@ Full documentation available in `documentation/`:
 
 | Metric | Count |
 |--------|-------|
-| **Tiers Completed** | 3 + Platinum (85%) |
+| **Tiers Completed** | 4/4 (100%) |
 | **Watchers** | 3 |
 | **MCP Servers** | 6 |
 | **Agent Skills** | 12 |
 | **Cloud Agents** | 4 |
-| **Cron Jobs** | 5 (4 daily + vault sync) |
+| **Cron Jobs** | 5 |
 | **Error Recovery Layers** | 3 |
+| **Cloud VM** | AWS EC2 t3.small |
 
 ---
 
@@ -676,8 +674,8 @@ This project is part of the Personal AI Employee Hackathon 0.
 
 ---
 
-**Built with:** Claude Code, Python, UV, Docker, Odoo, Obsidian, OpenAI Agents SDK
+**Built with:** Claude Code, Python, UV, Docker, Odoo, Obsidian, OpenAI Agents SDK, GLM (Zhipu AI)
 
-**Last Updated:** March 2026
+**Last Updated:** March 18, 2026
 
-**Project Status:** Platinum Tier In Progress (~85% Complete)
+**Project Status:** Platinum Tier Complete
