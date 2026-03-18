@@ -276,9 +276,11 @@ class CloudOrchestrator:
 
             # 3. Attach MCP server to FinanceAgent for Odoo access
             # Only attach if finance_agent exists (lazy initialization)
+            # Use full path to uv for cloud compatibility
+            uv_path = os.getenv("UV_PATH", "/home/ubuntu/.local/bin/uv" if os.getenv("CLOUD_ENV") else "uv")
             odoo_server = MCPServerStdio(
                 params={
-                    "command": "uv",
+                    "command": uv_path,
                     "args": ["run", "--directory", str(Path(__file__).parent), "mcp_servers/odoo_server.py"]
                 },
                 client_session_timeout_seconds=60
